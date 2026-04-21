@@ -19,7 +19,7 @@ const register = async (req, res) => {
       return ApiResponse.error(res, 'Validation failed', 400, errors.array());
     }
 
-    const { fullName, email, enrollmentNumber, department, yearOfStudy, password } = req.body;
+    const { fullName, email, usnNumber, department, yearOfStudy, password } = req.body;
 
     // Check if email already exists
     const existingUser = await User.findOne({ email });
@@ -27,17 +27,17 @@ const register = async (req, res) => {
       return ApiResponse.error(res, 'An account with this email already exists', 409);
     }
 
-    // Check if enrollment number already exists
-    const existingEnrollment = await User.findOne({ enrollmentNumber: enrollmentNumber.toUpperCase() });
-    if (existingEnrollment) {
-      return ApiResponse.error(res, 'This enrollment number is already registered', 409);
+    // Check if USN record already exists
+    const existingUSN = await User.findOne({ usnNumber: usnNumber.toUpperCase() });
+    if (existingUSN) {
+      return ApiResponse.error(res, 'This USN Number is already registered', 409);
     }
 
     // Create user
     const user = await User.create({
       fullName,
       email,
-      enrollmentNumber: enrollmentNumber.toUpperCase(),
+      usnNumber: usnNumber.toUpperCase(),
       department,
       yearOfStudy,
       password,
@@ -242,7 +242,7 @@ const login = async (req, res) => {
         email: user.email,
         role: user.role,
         department: user.department,
-        enrollmentNumber: user.enrollmentNumber,
+        usnNumber: user.usnNumber,
       },
     });
   } catch (error) {
@@ -448,10 +448,59 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * PUT /api/auth/update-verify-email
+ * Update email for unverified user and send new OTP
+ */
+const updateVerifyEmail = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return ApiResponse.error(res, 'Validation failed', 400, errors.array());
+    }
+
+    const { oldEmail, newEmail } = req.body;
+
+    // Check if new email is already in use by a VERIFIED user
+    const existingVerifiedUser = await User.findOne({ email: newEmail, isVerified: true });
+    if (existingVerifiedUser) {
+      return ApiResponse.error(res, 'An account with this email already exists and is verified', 409);
+    }
+
+    // Find the unverified user with old email
+    const user = await User.findOne({ email: oldEmail, isVerified: false });
+    if (!user) {
+      return ApiResponse.error(res, 'Unverified account with the old email not found', 404);
+    }
+
+    // Update user's email
+    user.email = newEmail;
+    await user.save();
+
+    // Delete any existing OTPs for both emails to save storage
+    await OTP.deleteMany({ email: { $in: [oldEmail, newEmail] } });
+
+    // Generate and send new OTP
+    const otp = generateOTP();
+    await OTP.create({
+      email: newEmail,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+
+    await sendOTPEmail(user.fullName, newEmail, otp);
+
+    return ApiResponse.success(res, 'Email updated and new OTP sent.', { email: newEmail });
+  } catch (error) {
+    return ApiResponse.error(res, 'Failed to update email. Please try again.', 500);
+  }
+};
+
 module.exports = {
   register,
   verifyEmail,
   resendOTP,
+  updateVerifyEmail,
   login,
   logout,
   refreshTokenHandler,

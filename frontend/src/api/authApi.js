@@ -12,6 +12,10 @@ export const verifyEmail = (data) =>
 export const resendOTP = (data) =>
   axiosInstance.post('/auth/resend-otp', data);
 
+// Update Verify Email
+export const updateVerifyEmail = (data) =>
+  axiosInstance.put('/auth/update-verify-email', data);
+
 // Login
 export const loginUser = (data) =>
   axiosInstance.post('/auth/login', data);

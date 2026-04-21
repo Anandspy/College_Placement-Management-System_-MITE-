@@ -4,6 +4,7 @@ const {
   register,
   verifyEmail,
   resendOTP,
+  updateVerifyEmail,
   login,
   logout,
   refreshTokenHandler,
@@ -16,6 +17,7 @@ const {
   loginValidation,
   verifyEmailValidation,
   resendOTPValidation,
+  updateVerifyEmailValidation,
   forgotPasswordValidation,
   validateResetTokenValidation,
   resetPasswordValidation,
@@ -27,6 +29,7 @@ const { authLimiter, sensitiveLimiter } = require('../middleware/rateLimiter');
 router.post('/register', authLimiter, registerValidation, register);
 router.post('/verify-email', verifyEmailValidation, verifyEmail);
 router.post('/resend-otp', sensitiveLimiter, resendOTPValidation, resendOTP);
+router.put('/update-verify-email', sensitiveLimiter, updateVerifyEmailValidation, updateVerifyEmail);
 router.post('/login', authLimiter, loginValidation, login);
 router.post('/refresh-token', refreshTokenHandler);
 router.post('/forgot-password', sensitiveLimiter, forgotPasswordValidation, forgotPassword);

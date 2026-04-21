@@ -14,11 +14,11 @@ export const registerSchema = z
       .string()
       .min(1, 'Email is required')
       .email('Please enter a valid email'),
-    enrollmentNumber: z
+    usnNumber: z
       .string()
-      .min(6, 'Enrollment number must be at least 6 characters')
-      .max(20, 'Enrollment number cannot exceed 20 characters')
-      .regex(/^[a-zA-Z0-9]+$/, 'Enrollment number must be alphanumeric'),
+      .min(6, 'USN Number must be at least 6 characters')
+      .max(20, 'USN Number cannot exceed 20 characters')
+      .regex(/^[a-zA-Z0-9]+$/, 'USN Number must be alphanumeric'),
     department: z
       .string()
       .min(1, 'Please select a department')

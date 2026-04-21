@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import AuthLayout from '../../components/auth/AuthLayout';
 import OTPInput from '../../components/auth/OTPInput';
-import { verifyEmail, resendOTP } from '../../api/authApi';
+import { verifyEmail, resendOTP, updateVerifyEmail } from '../../api/authApi';
 import useCountdown from '../../hooks/useCountdown';
 
 const VerifyEmailPage = () => {
@@ -14,6 +14,9 @@ const VerifyEmailPage = () => {
   const [error, setError] = useState('');
   const [otpError, setOtpError] = useState(false);
   const [email, setEmail] = useState('');
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
   const { seconds, isActive, start, formattedTime } = useCountdown(60);
 
   useEffect(() => {
@@ -63,6 +66,35 @@ const VerifyEmailPage = () => {
     }
   };
 
+  const handleUpdateEmail = async () => {
+    if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (newEmail === email) {
+      setIsEditingEmail(false);
+      return;
+    }
+
+    setIsUpdatingEmail(true);
+    try {
+      await updateVerifyEmail({ oldEmail: email, newEmail });
+      setEmail(newEmail);
+      sessionStorage.setItem('verifyEmail', newEmail);
+      setIsEditingEmail(false);
+      start(); // Restart countdown for the new OTP
+      toast.success('Email updated and new OTP sent!');
+      setError('');
+      setOtpError(false);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to update email.';
+      toast.error(msg);
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
+
   return (
     <AuthLayout>
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 w-full max-w-md">
@@ -83,10 +115,51 @@ const VerifyEmailPage = () => {
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
             Verify your email
           </h1>
-          <p className="mt-1.5 text-sm text-neutral-600">
-            We've sent a 6-digit OTP to{' '}
-            <span className="font-medium text-neutral-900">{maskedEmail}</span>
-          </p>
+          <div className="mt-1.5 flex flex-col items-center justify-center gap-1">
+            <p className="text-sm text-neutral-600">
+              We've sent a 6-digit OTP to
+            </p>
+            {isEditingEmail ? (
+              <div className="flex items-center gap-2 w-full mt-1">
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="h-9 flex-1 rounded-md border border-neutral-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange"
+                  placeholder="Enter correct email"
+                  autoFocus
+                />
+                <button
+                  onClick={handleUpdateEmail}
+                  disabled={isUpdatingEmail}
+                  className="h-9 px-3 rounded-md bg-brand-orange text-white text-xs font-semibold hover:bg-orange-600 disabled:opacity-50"
+                  id="update-email-btn"
+                >
+                  {isUpdatingEmail ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Save'}
+                </button>
+                <button
+                  onClick={() => setIsEditingEmail(false)}
+                  className="text-xs text-neutral-500 hover:text-neutral-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-neutral-900">{maskedEmail}</span>
+                <button
+                  onClick={() => {
+                    setNewEmail(email);
+                    setIsEditingEmail(true);
+                  }}
+                  className="text-xs text-brand-blue hover:underline font-medium"
+                  id="edit-email-btn"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* OTP Input */}

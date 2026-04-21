@@ -17,9 +17,9 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    enrollmentNumber: {
+    usnNumber: {
       type: String,
-      required: [true, 'Enrollment number is required'],
+      required: [true, 'USN Number is required'],
       unique: true,
       uppercase: true,
       trim: true,

@@ -41,7 +41,7 @@ const RegisterPage = () => {
     defaultValues: {
       fullName: '',
       email: '',
-      enrollmentNumber: '',
+      usnNumber: '',
       department: '',
       yearOfStudy: '',
       password: '',
@@ -60,7 +60,7 @@ const RegisterPage = () => {
       const res = await registerUser({
         fullName: data.fullName,
         email: data.email,
-        enrollmentNumber: data.enrollmentNumber,
+        usnNumber: data.usnNumber,
         department: data.department,
         yearOfStudy: data.yearOfStudy,
         password: data.password,
@@ -160,24 +160,24 @@ const RegisterPage = () => {
               <FormError message={errors.email?.message} />
             </motion.div>
 
-            {/* Enrollment Number */}
+            {/* USN Number */}
             <motion.div variants={itemVariants}>
-              <label htmlFor="enrollmentNumber" className="block text-xs font-medium text-neutral-500 mb-1.5">
-                Enrollment Number
+              <label htmlFor="usnNumber" className="block text-xs font-medium text-neutral-500 mb-1.5">
+                USN Number
               </label>
               <div className="relative">
                 <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                 <input
-                  id="enrollmentNumber"
+                  id="usnNumber"
                   type="text"
-                  placeholder="e.g. MCA2024001"
-                  {...register('enrollmentNumber')}
+                  placeholder="e.g. 4MT25MC007"
+                  {...register('usnNumber')}
                   className={`h-11 w-full rounded-lg border bg-white pl-10 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange transition-all duration-200 ${
-                    errors.enrollmentNumber ? 'border-red-400' : 'border-neutral-300'
+                    errors.usnNumber ? 'border-red-400' : 'border-neutral-300'
                   }`}
                 />
               </div>
-              <FormError message={errors.enrollmentNumber?.message} />
+              <FormError message={errors.usnNumber?.message} />
             </motion.div>
 
             {/* Department & Year — side by side */}

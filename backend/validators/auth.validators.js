@@ -32,11 +32,11 @@ const registerValidation = [
     .isEmail().withMessage('Please enter a valid email')
     .normalizeEmail(),
 
-  body('enrollmentNumber')
+  body('usnNumber')
     .trim()
-    .notEmpty().withMessage('Enrollment number is required')
-    .isLength({ min: 6, max: 20 }).withMessage('Enrollment number must be 6-20 characters')
-    .isAlphanumeric().withMessage('Enrollment number must be alphanumeric'),
+    .notEmpty().withMessage('USN Number is required')
+    .isLength({ min: 6, max: 20 }).withMessage('USN Number must be 6-20 characters')
+    .isAlphanumeric().withMessage('USN Number must be alphanumeric'),
 
   body('department')
     .trim()
@@ -144,4 +144,16 @@ module.exports = {
   forgotPasswordValidation,
   validateResetTokenValidation,
   resetPasswordValidation,
+  updateVerifyEmailValidation: [
+    body('oldEmail')
+      .trim()
+      .notEmpty().withMessage('Old email is required')
+      .isEmail().withMessage('Please enter a valid email')
+      .normalizeEmail(),
+    body('newEmail')
+      .trim()
+      .notEmpty().withMessage('New email is required')
+      .isEmail().withMessage('Please enter a valid email')
+      .normalizeEmail(),
+  ],
 };

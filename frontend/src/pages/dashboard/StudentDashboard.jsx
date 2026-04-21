@@ -87,7 +87,7 @@ const StudentDashboard = () => {
             </motion.div>
             <div>
               <p className="text-sm font-bold text-neutral-900">{user?.fullName}</p>
-              <p className="text-xs text-neutral-500 font-medium">{user?.department} • {user?.enrollmentNumber}</p>
+              <p className="text-xs text-neutral-500 font-medium">{user?.department} • {user?.usnNumber}</p>
             </div>
           </div>
           <button
