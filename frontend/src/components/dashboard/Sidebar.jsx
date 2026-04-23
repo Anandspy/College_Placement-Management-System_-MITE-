@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { logoutUser } from '../../features/auth/authThunks';
 import miteLogo from '../../assets/mite-logo.png';
+import miteIcon from '../../assets/mite-icon.svg';
 
 const studentNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/dashboard/student' },
@@ -54,17 +55,15 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
   const renderNav = (isMobile = false) => (
     <div className="flex flex-col h-full">
       {/* Logo Area */}
-      <div className={`flex items-center gap-3 px-5 pt-6 pb-5 border-b border-neutral-200/60 ${(!isMobile && collapsed) ? 'justify-center px-3' : ''}`}>
-        <img src={miteLogo} alt="MITE" className="h-9 w-auto flex-shrink-0" />
-        {(isMobile || !collapsed) && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-sm font-bold text-neutral-800 tracking-tight whitespace-nowrap"
-          >
-            MITE Placements
-          </motion.span>
+      <div className={`flex items-center px-5 pt-6 pb-5 border-b border-neutral-200/60 ${(!isMobile && collapsed) ? 'justify-center px-3' : ''}`}>
+        {(!isMobile && collapsed) ? (
+          <img src={miteIcon} alt="MITE Icon" className="h-8 w-8 flex-shrink-0" />
+        ) : (
+          <div className="flex items-center">
+            <img src={miteIcon} alt="MITE Icon" className="h-7 w-7 flex-shrink-0" />
+            <div className="w-[1.5px] h-6 bg-neutral-300 mx-3 rounded-full flex-shrink-0" />
+            <img src={miteLogo} alt="MITE Logo" className="h-8 w-auto flex-shrink-0" />
+          </div>
         )}
       </div>
 
@@ -87,14 +86,6 @@ const Sidebar = ({ isMobileOpen, onMobileClose }) => {
           >
             {({ isActive }) => (
               <>
-                {/* Active indicator bar */}
-                {isActive && (
-                  <motion.div
-                    layoutId={isMobile ? 'mobile-active-pill' : 'desktop-active-pill'}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-brand-orange rounded-r-full"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  />
-                )}
                 <item.icon className={`h-[18px] w-[18px] flex-shrink-0 transition-colors ${isActive ? 'text-brand-orange' : 'text-neutral-400 group-hover:text-neutral-600'}`} />
                 {(isMobile || !collapsed) && (
                   <span className="whitespace-nowrap">{item.label}</span>

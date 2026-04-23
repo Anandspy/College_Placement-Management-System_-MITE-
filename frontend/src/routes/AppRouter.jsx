@@ -30,7 +30,7 @@ const AppRouter = () => {
 
       {/* Protected dashboard routes */}
       <Route
-        path="/dashboard/student"
+        path="/dashboard/student/*"
         element={
           <ProtectedRoute>
             <RoleRoute allowedRoles={[ROLES.STUDENT]}>
@@ -40,7 +40,7 @@ const AppRouter = () => {
         }
       />
       <Route
-        path="/dashboard/admin"
+        path="/dashboard/admin/*"
         element={
           <ProtectedRoute>
             <RoleRoute allowedRoles={[ROLES.ADMIN]}>
@@ -50,7 +50,7 @@ const AppRouter = () => {
         }
       />
       <Route
-        path="/dashboard/hr"
+        path="/dashboard/hr/*"
         element={
           <ProtectedRoute>
             <RoleRoute allowedRoles={[ROLES.HR]}>
