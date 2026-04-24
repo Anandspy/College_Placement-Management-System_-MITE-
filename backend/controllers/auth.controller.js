@@ -68,7 +68,6 @@ const register = async (req, res) => {
       201
     );
   } catch (error) {
-
     return ApiResponse.error(res, 'Registration failed. Please try again.', 500);
   }
 };
@@ -123,7 +122,6 @@ const verifyEmail = async (req, res) => {
 
     return ApiResponse.success(res, 'Email verified successfully. You can now log in.');
   } catch (error) {
-
     return ApiResponse.error(res, 'Verification failed. Please try again.', 500);
   }
 };
@@ -170,7 +168,6 @@ const resendOTP = async (req, res) => {
 
     return ApiResponse.success(res, 'OTP has been resent to your email.');
   } catch (error) {
-
     return ApiResponse.error(res, 'Failed to resend OTP. Please try again.', 500);
   }
 };
@@ -246,7 +243,6 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-
     return ApiResponse.error(res, 'Login failed. Please try again.', 500);
   }
 };
