@@ -9,6 +9,8 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
 // Dashboard pages
 import StudentDashboard from '../pages/dashboard/StudentDashboard';
+import StudentDashboardHome from '../pages/dashboard/StudentDashboardHome';
+import StudentProfilePage from '../pages/dashboard/StudentProfilePage';
 import AdminDashboard from '../pages/dashboard/AdminDashboard';
 import HRDashboard from '../pages/dashboard/HRDashboard';
 
@@ -30,7 +32,7 @@ const AppRouter = () => {
 
       {/* Protected dashboard routes */}
       <Route
-        path="/dashboard/student/*"
+        path="/dashboard/student"
         element={
           <ProtectedRoute>
             <RoleRoute allowedRoles={[ROLES.STUDENT]}>
@@ -38,7 +40,10 @@ const AppRouter = () => {
             </RoleRoute>
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<StudentDashboardHome />} />
+        <Route path="profile" element={<StudentProfilePage />} />
+      </Route>
       <Route
         path="/dashboard/admin/*"
         element={
