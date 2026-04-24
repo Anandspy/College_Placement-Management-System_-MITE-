@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const StudentProfile = require('../models/StudentProfile.model');
 const ApiResponse = require('../utils/ApiResponse');
+const cloudinary = require('../config/cloudinary');
 
 // ── Whitelist of updatable fields ───────────────────────────────
 // Prevents clients from injecting fields like userId, resumeUrl, etc.
@@ -110,7 +111,70 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/profile/resume
+ * Upload resume (PDF) to Cloudinary
+ */
+const uploadResume = async (req, res) => {
+  try {
+    if (!req.file) {
+      return ApiResponse.error(res, 'No file uploaded', 400);
+    }
+
+    let profile = await StudentProfile.findOne({ userId: req.user._id });
+    if (!profile) {
+      profile = new StudentProfile({ userId: req.user._id });
+    }
+
+    // Delete existing old resume from Cloudinary
+    if (profile.resumePublicId) {
+      await cloudinary.uploader.destroy(profile.resumePublicId);
+    }
+
+    // Update profile with new resume info
+    profile.resumeUrl = req.file.path;
+    profile.resumePublicId = req.file.filename;
+
+    await profile.save();
+
+    return ApiResponse.success(res, 'Resume uploaded successfully', {
+      resumeUrl: profile.resumeUrl,
+    });
+  } catch (error) {
+    console.error('Upload resume error:', error.message);
+    return ApiResponse.error(res, 'Failed to upload resume', 500);
+  }
+};
+
+/**
+ * DELETE /api/profile/resume
+ * Remove resume from Cloudinary & clear fields
+ */
+const deleteResume = async (req, res) => {
+  try {
+    const profile = await StudentProfile.findOne({ userId: req.user._id });
+    
+    if (!profile || !profile.resumePublicId) {
+      return ApiResponse.error(res, 'No resume found to delete', 404);
+    }
+
+    // Delete from Cloudinary
+    await cloudinary.uploader.destroy(profile.resumePublicId);
+
+    profile.resumeUrl = '';
+    profile.resumePublicId = '';
+    await profile.save();
+
+    return ApiResponse.success(res, 'Resume deleted successfully');
+  } catch (error) {
+    console.error('Delete resume error:', error.message);
+    return ApiResponse.error(res, 'Failed to delete resume', 500);
+  }
+};
+
 module.exports = {
   getMyProfile,
   updateMyProfile,
+  uploadResume,
+  deleteResume,
 };
