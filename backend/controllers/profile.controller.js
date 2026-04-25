@@ -161,8 +161,19 @@ const deleteResume = async (req, res, next) => {
       return ApiResponse.error(res, 'No resume found to delete', 404);
     }
 
-    // Delete from Cloudinary
-    await cloudinary.uploader.destroy(profile.resumePublicId);
+    // Delete from Cloudinary - we must specify the correct resource_type.
+    // We can determine this by checking the resumeUrl.
+    const resourceType = (profile.resumeUrl && profile.resumeUrl.includes('/raw/')) ? 'raw' : 'image';
+    
+    try {
+      await cloudinary.uploader.destroy(profile.resumePublicId, { 
+        resource_type: resourceType 
+      });
+    } catch (cloudinaryError) {
+      console.error('Cloudinary destroy error:', cloudinaryError);
+      // We continue anyway to clear the database fields, 
+      // as the file might already be gone from Cloudinary.
+    }
 
     profile.resumeUrl = '';
     profile.resumePublicId = '';
