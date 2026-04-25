@@ -5,7 +5,7 @@ export const profileSchema = z.object({
     .string()
     .min(10, 'Phone number must be 10 digits')
     .max(10, 'Phone number must be 10 digits')
-    .regex(/^[0-9]+$/, 'Phone number must contain only digits'),
+    .regex(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit Indian mobile number'),
   
   dateOfBirth: z.string().optional().or(z.literal('')),
   
@@ -13,7 +13,7 @@ export const profileSchema = z.object({
     errorMap: () => ({ message: 'Please select a valid gender' }),
   }),
   
-  address: z.string().min(5, 'Address is too short').max(200, 'Address is too long').optional().or(z.literal('')),
+  address: z.string().min(5, 'Address is too short').max(300, 'Address is too long').optional().or(z.literal('')),
   
   // Academic Details
   tenthPercentage: z.coerce
@@ -26,7 +26,7 @@ export const profileSchema = z.object({
   
   tenthPassingYear: z.coerce
     .number()
-    .min(1990, 'Invalid year')
+    .min(2000, 'Year must be 2000 or later')
     .max(new Date().getFullYear(), 'Invalid year')
     .optional(),
   
@@ -40,7 +40,7 @@ export const profileSchema = z.object({
   
   twelfthPassingYear: z.coerce
     .number()
-    .min(1990, 'Invalid year')
+    .min(2000, 'Year must be 2000 or later')
     .max(new Date().getFullYear(), 'Invalid year')
     .optional(),
   

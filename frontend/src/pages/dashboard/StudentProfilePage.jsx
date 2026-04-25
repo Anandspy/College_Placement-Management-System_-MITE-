@@ -173,10 +173,14 @@ const StudentProfilePage = () => {
   const onSaveProfile = async (data) => {
     try {
       await dispatch(updateProfile(data)).unwrap();
-      toast.success('Profile updated successfully');
+      toast.success('Profile updated successfully ✓');
       setIsEditing(false);
     } catch (err) {
-      toast.error(err.message || 'Failed to update profile');
+      if (err.errors && Array.isArray(err.errors) && err.errors.length > 0) {
+        toast.error(err.errors[0].msg || err.message || 'Validation failed');
+      } else {
+        toast.error('Failed to save profile. Please try again.');
+      }
     }
   };
 
@@ -184,12 +188,8 @@ const StudentProfilePage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
-      return toast.error('Only PDF files are allowed');
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      return toast.error('File size must be under 2MB');
+    if (file.type !== 'application/pdf' || file.size > 2 * 1024 * 1024) {
+      return toast.error('Only PDF files under 2MB are allowed');
     }
 
     const formData = new FormData();
@@ -197,7 +197,7 @@ const StudentProfilePage = () => {
 
     try {
       await dispatch(uploadResume(formData)).unwrap();
-      toast.success('Resume uploaded successfully');
+      toast.success('Resume uploaded successfully ✓');
     } catch (err) {
       toast.error(err.message || 'Failed to upload resume');
     }
