@@ -1,0 +1,77 @@
+# Implementation Plan: Placement Drive Portal
+
+This plan outlines the systematic development of the Placement Drive Portal, transitioning from the current mock-up to a fully functional, real-time job portal for students.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Eligibility Logic**: The system will automatically compare student profiles against drive criteria. Should we allow students to see drives they are NOT eligible for, with a "Locked/Ineligible" badge, or hide them entirely?
+> 
+> **Application Flow**: This phase focuses on *viewing* drives. Should we also include the "Apply" button functionality in Phase 1, or keep it for the next phase?
+
+## Proposed Changes
+
+The development will be split into 3 clear phases.
+
+### Phase 1: Backend Foundation (The "Drive" Engine)
+In this phase, we build the core data structures and Admin/HR capabilities to manage job postings.
+
+#### [NEW] [Drive.model.js](file:///c:/Users/Alok%20Chandra/cpms-mini-project/backend/models/Drive.model.js)
+*   **Company Details**: Name, Logo (Cloudinary), Description.
+*   **Job Details**: Role title, CTC, Location, Job Type (Full-time/Internship).
+*   **Eligibility Schema**:
+    *   `minCgpa`: Number
+    *   `eligibleBranches`: Array (matches User department enum)
+    *   `minTenthPercent`: Number
+    *   `minTwelfthPercent`: Number
+    *   `maxBacklogs`: Number
+*   **Timeline**: Registration deadline, Drive date.
+*   **Status**: `open`, `upcoming`, `closed`.
+
+#### [NEW] [drive.controller.js](file:///c:/Users/Alok%20Chandra/cpms-mini-project/backend/controllers/drive.controller.js) & [drive.routes.js](file:///c:/Users/Alok%20Chandra/cpms-mini-project/backend/routes/drive.routes.js)
+*   `POST /api/drives`: (Admin/HR only) Create a new drive.
+*   `GET /api/drives`: (Public/Student) List all drives with basic info.
+*   `GET /api/drives/:id`: (Public/Student) Get full drive details.
+*   `PATCH /api/drives/:id`: (Admin/HR) Update drive details.
+
+---
+
+### Phase 2: Student UI & Real-time Integration
+In this phase, we replace the `DrivesPlaceholder` and dashboard mock data with real API calls.
+
+#### [MODIFY] [DrivesPage.jsx](file:///c:/Users/Alok%20Chandra/cpms-mini-project/frontend/src/pages/dashboard/DrivesPage.jsx) (Renaming DrivesPlaceholder)
+*   Implement a grid/list view of active drives.
+*   Use skeleton loaders for a premium feel.
+*   Filter by status (Open/Upcoming).
+
+#### [NEW] [DriveDetail.jsx](file:///c:/Users/Alok%20Chandra/cpms-mini-project/frontend/src/pages/dashboard/DriveDetail.jsx)
+*   A dedicated page to show full company info, JD, and recruitment process steps.
+*   Visual "Steps" indicator for the recruitment process (e.g., *Aptitude -> Tech Interview -> HR Interview*).
+
+---
+
+### Phase 3: Eligibility Filtering & Smart UI
+The "Wow" factor: automating the selection process for students.
+
+#### [MODIFY] Frontend Logic
+*   **Eligibility Hook**: A custom hook `useEligibility(drive)` that compares `user` profile data from Redux with `drive` criteria.
+*   **UI Indicators**: 
+    *   ✅ Green "Eligible" badge for students meeting criteria.
+    *   ❌ Red "Not Eligible" badge with a reason (e.g., "Minimum 7.5 CGPA required").
+    *   ⚠️ Warning badge if profile is incomplete (link to profile).
+
+#### [MODIFY] [StudentDashboardHome.jsx](file:///c:/Users/Alok%20Chandra/cpms-mini-project/frontend/src/pages/dashboard/StudentDashboardHome.jsx)
+*   Replace `mockDrives` with a `GET /api/drives?limit=3` call to show the latest open drives.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+1.  **Backend API Tests**: Verify that only Admin/HR can create/update drives.
+2.  **Eligibility Logic Tests**: Unit tests to ensure `7.4 CGPA` fails a `7.5 CGPA` requirement.
+
+### Manual Verification
+1.  Create a drive as an Admin with 7.0 CGPA requirement.
+2.  Login as a student with 6.5 CGPA and verify the "Not Eligible" badge appears.
+3.  Verify the "Apply" button is disabled/hidden for ineligible students.

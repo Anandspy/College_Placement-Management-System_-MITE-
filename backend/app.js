@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const authRoutes = require('./routes/auth.routes');
 const profileRoutes = require('./routes/profile.routes');
 const driveRoutes = require('./routes/drive.routes');
+const applicationRoutes = require('./routes/application.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/drives', driveRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // 404 handler
 app.use((req, res) => {

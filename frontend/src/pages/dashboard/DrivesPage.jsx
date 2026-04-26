@@ -17,16 +17,126 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getDrives, resetDriveState } from '../../features/drives/driveSlice';
+import { getMyApplicationsAction } from '../../features/applications/applicationSlice';
+import useEligibility from '../../hooks/useEligibility';
+
+const DriveCard = ({ drive, index, hasApplied }) => {
+  const { isEligible, isProfileIncomplete } = useEligibility(drive);
+
+  const getStatusColor = (status) => {
+    if (hasApplied) return 'bg-brand-blue-light text-brand-blue border-brand-blue/20';
+    if (isProfileIncomplete) return 'bg-amber-100 text-amber-700 border-amber-200';
+    if (!isEligible) return 'bg-rose-100 text-rose-700 border-rose-200';
+    
+    switch (status) {
+      case 'open': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'upcoming': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'closed': return 'bg-rose-100 text-rose-700 border-rose-200';
+      default: return 'bg-neutral-100 text-neutral-700 border-neutral-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    if (hasApplied) return <CheckCircle2 className="w-3.5 h-3.5 mr-1" />;
+    if (isProfileIncomplete) return <AlertCircle className="w-3.5 h-3.5 mr-1" />;
+    if (!isEligible) return <AlertCircle className="w-3.5 h-3.5 mr-1" />;
+
+    switch (status) {
+      case 'open': return <CheckCircle2 className="w-3.5 h-3.5 mr-1" />;
+      case 'upcoming': return <Clock className="w-3.5 h-3.5 mr-1" />;
+      case 'closed': return <AlertCircle className="w-3.5 h-3.5 mr-1" />;
+      default: return null;
+    }
+  };
+
+  const getStatusText = (status) => {
+    if (hasApplied) return 'Applied';
+    if (isProfileIncomplete) return 'Incomplete Profile';
+    if (!isEligible) return 'Not Eligible';
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  };
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ delay: index * 0.05 }}
+      className="group relative bg-white rounded-3xl border border-neutral-100 p-6 hover:shadow-2xl hover:shadow-neutral-200/50 hover:border-brand-orange/20 transition-all duration-300"
+    >
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 group-hover:scale-110 transition-transform overflow-hidden shadow-inner">
+            {drive.companyLogo ? (
+              <img src={drive.companyLogo} alt={drive.companyName} className="w-full h-full object-cover" />
+            ) : (
+              <Building2 className="w-7 h-7 text-neutral-400" />
+            )}
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-neutral-900 leading-tight group-hover:text-brand-orange transition-colors">
+              {drive.companyName}
+            </h3>
+            <div className="flex items-center text-neutral-500 text-sm font-medium mt-1">
+              <MapPin className="w-3.5 h-3.5 mr-1" />
+              {drive.location}
+            </div>
+          </div>
+        </div>
+        <div className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border flex items-center ${getStatusColor(drive.status)}`}>
+          {getStatusIcon(drive.status)}
+          {getStatusText(drive.status)}
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <h4 className="text-neutral-900 font-bold mb-1 line-clamp-1">{drive.jobRole}</h4>
+        <div className="flex items-center text-brand-blue font-bold text-sm bg-brand-blue-light/50 px-3 py-1 rounded-lg w-fit">
+          <DollarSign className="w-3.5 h-3.5 mr-0.5" />
+          {drive.ctc}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 py-4 border-y border-neutral-50 mb-6">
+        <div className="flex items-center text-neutral-500 text-sm font-medium">
+          <Briefcase className="w-4 h-4 mr-2 text-neutral-400" />
+          {drive.jobType}
+        </div>
+        <div className="flex items-center text-neutral-500 text-sm font-medium">
+          <Calendar className="w-4 h-4 mr-2 text-neutral-400" />
+          {new Date(drive.driveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+        </div>
+      </div>
+
+      <Link 
+        to={`/dashboard/student/drives/${drive._id}`}
+        className={`flex items-center justify-center w-full py-3.5 rounded-2xl font-bold transition-all duration-300 group-hover:shadow-lg ${
+          hasApplied 
+            ? 'bg-brand-blue text-white hover:bg-brand-blue-dark'
+            : !isEligible || isProfileIncomplete
+            ? 'bg-neutral-100 text-neutral-400 hover:bg-neutral-200'
+            : 'bg-neutral-900 text-white hover:bg-brand-orange group-hover:shadow-brand-orange/30'
+        }`}
+      >
+        {hasApplied ? 'View Application' : 'View Details'}
+        <ArrowRight className="w-4 h-4 ml-2" />
+      </Link>
+    </motion.div>
+  );
+};
 
 const DrivesPage = () => {
   const dispatch = useDispatch();
   const { drives, isLoading, isError, message } = useSelector((state) => state.drives);
+  const { applications } = useSelector((state) => state.applications);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
     dispatch(getDrives());
+    dispatch(getMyApplicationsAction());
     
     return () => {
       dispatch(resetDriveState());
@@ -39,24 +149,6 @@ const DrivesPage = () => {
     const matchesStatus = statusFilter === 'all' || drive.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'open': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-      case 'upcoming': return 'bg-amber-100 text-amber-700 border-amber-200';
-      case 'closed': return 'bg-rose-100 text-rose-700 border-rose-200';
-      default: return 'bg-neutral-100 text-neutral-700 border-neutral-200';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'open': return <CheckCircle2 className="w-3.5 h-3.5 mr-1" />;
-      case 'upcoming': return <Clock className="w-3.5 h-3.5 mr-1" />;
-      case 'closed': return <AlertCircle className="w-3.5 h-3.5 mr-1" />;
-      default: return null;
-    }
-  };
 
   const DriveCardSkeleton = () => (
     <div className="bg-white rounded-2xl border border-neutral-100 p-6 animate-pulse">
@@ -170,69 +262,10 @@ const DrivesPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
-            {filteredDrives.map((drive, index) => (
-              <motion.div
-                key={drive._id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: index * 0.05 }}
-                className="group relative bg-white rounded-3xl border border-neutral-100 p-6 hover:shadow-2xl hover:shadow-neutral-200/50 hover:border-brand-orange/20 transition-all duration-300"
-              >
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 group-hover:scale-110 transition-transform overflow-hidden shadow-inner">
-                      {drive.companyLogo ? (
-                        <img src={drive.companyLogo} alt={drive.companyName} className="w-full h-full object-cover" />
-                      ) : (
-                        <Building2 className="w-7 h-7 text-neutral-400" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-neutral-900 leading-tight group-hover:text-brand-orange transition-colors">
-                        {drive.companyName}
-                      </h3>
-                      <div className="flex items-center text-neutral-500 text-sm font-medium mt-1">
-                        <MapPin className="w-3.5 h-3.5 mr-1" />
-                        {drive.location}
-                      </div>
-                    </div>
-                  </div>
-                  <div className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border flex items-center ${getStatusColor(drive.status)}`}>
-                    {getStatusIcon(drive.status)}
-                    {drive.status}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-neutral-900 font-bold mb-1 line-clamp-1">{drive.jobRole}</h4>
-                  <div className="flex items-center text-brand-blue font-bold text-sm bg-brand-blue-light/50 px-3 py-1 rounded-lg w-fit">
-                    <DollarSign className="w-3.5 h-3.5 mr-0.5" />
-                    {drive.ctc}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 py-4 border-y border-neutral-50 mb-6">
-                  <div className="flex items-center text-neutral-500 text-sm font-medium">
-                    <Briefcase className="w-4 h-4 mr-2 text-neutral-400" />
-                    {drive.jobType}
-                  </div>
-                  <div className="flex items-center text-neutral-500 text-sm font-medium">
-                    <Calendar className="w-4 h-4 mr-2 text-neutral-400" />
-                    {new Date(drive.driveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                  </div>
-                </div>
-
-                <Link 
-                  to={`/dashboard/student/drives/${drive._id}`}
-                  className="flex items-center justify-center w-full py-3.5 bg-neutral-900 text-white rounded-2xl font-bold hover:bg-brand-orange transition-all duration-300 group-hover:shadow-lg group-hover:shadow-brand-orange/30"
-                >
-                  View Details
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Link>
-              </motion.div>
-            ))}
+            {filteredDrives.map((drive, index) => {
+              const hasApplied = applications.some(app => app.driveId?._id === drive._id || app.driveId === drive._id);
+              return <DriveCard key={drive._id} drive={drive} index={index} hasApplied={hasApplied} />;
+            })}
           </AnimatePresence>
         </div>
       )}

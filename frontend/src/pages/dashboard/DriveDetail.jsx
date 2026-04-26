@@ -19,6 +19,9 @@ import {
   Info
 } from 'lucide-react';
 import { getDriveById, clearCurrentDrive } from '../../features/drives/driveSlice';
+import { applyToDriveAction, getMyApplicationsAction, resetApplicationState } from '../../features/applications/applicationSlice';
+import useEligibility from '../../hooks/useEligibility';
+import toast from 'react-hot-toast';
 
 const DriveDetail = () => {
   const { id } = useParams();
@@ -26,12 +29,40 @@ const DriveDetail = () => {
   const dispatch = useDispatch();
   
   const { currentDrive, isLoading, isError, message } = useSelector((state) => state.drives);
-  const { user } = useSelector((state) => state.auth);
+  const { applications, isLoading: isApplying, isSuccess: applicationSuccess, isError: applicationError, message: applicationMessage } = useSelector((state) => state.applications);
+  
+  const hasApplied = applications.some(app => app.driveId?._id === id || app.driveId === id);
+  const { isEligible, reason, isProfileIncomplete } = useEligibility(currentDrive);
 
   useEffect(() => {
     dispatch(getDriveById(id));
-    return () => dispatch(clearCurrentDrive());
+    dispatch(getMyApplicationsAction());
+    
+    return () => {
+      dispatch(clearCurrentDrive());
+      dispatch(resetApplicationState());
+    };
   }, [id, dispatch]);
+
+  useEffect(() => {
+    if (applicationSuccess) {
+      toast.success(applicationMessage || 'Application submitted successfully!');
+      dispatch(getMyApplicationsAction()); // Refresh applications
+      dispatch(resetApplicationState());
+    }
+    if (applicationError) {
+      toast.error(applicationMessage);
+      dispatch(resetApplicationState());
+    }
+  }, [applicationSuccess, applicationError, applicationMessage, dispatch]);
+
+  const handleApply = () => {
+    if (!isEligible) {
+      toast.error(reason);
+      return;
+    }
+    dispatch(applyToDriveAction(id));
+  };
 
   if (isLoading) {
     return (
@@ -102,10 +133,17 @@ const DriveDetail = () => {
                   <span className="flex items-center"><Briefcase className="w-4 h-4 mr-1.5 text-brand-orange" />{currentDrive.jobType}</span>
                 </div>
               </div>
-              <div className="sm:ml-auto">
-                <span className={`px-4 py-2 rounded-full text-xs font-extrabold uppercase tracking-widest border border-emerald-200 bg-emerald-50 text-emerald-700`}>
-                  {currentDrive.status}
+              <div className="sm:ml-auto flex flex-col items-end gap-2">
+                <span className={`px-4 py-2 rounded-full text-xs font-extrabold uppercase tracking-widest border ${
+                  isProfileIncomplete ? 'border-amber-200 bg-amber-50 text-amber-700' :
+                  !isEligible ? 'border-rose-200 bg-rose-50 text-rose-700' :
+                  'border-emerald-200 bg-emerald-50 text-emerald-700'
+                }`}>
+                  {isProfileIncomplete ? 'Incomplete Profile' : !isEligible ? 'Not Eligible' : currentDrive.status}
                 </span>
+                {!isEligible && (
+                  <p className="text-[10px] font-bold text-rose-500 max-w-[150px] text-right">{reason}</p>
+                )}
               </div>
             </div>
 
@@ -237,18 +275,23 @@ const DriveDetail = () => {
             </div>
 
             <button 
-              disabled={currentDrive.status === 'closed'}
+              onClick={handleApply}
+              disabled={currentDrive.status === 'closed' || !isEligible || isProfileIncomplete || hasApplied || isApplying}
               className={`w-full py-4 rounded-2xl font-extrabold text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-                currentDrive.status === 'closed' 
+                currentDrive.status === 'closed' || !isEligible || isProfileIncomplete || hasApplied || isApplying
                 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                 : 'bg-neutral-900 text-white hover:bg-brand-orange hover:shadow-brand-orange/30'
               }`}
             >
-              {currentDrive.status === 'closed' ? 'Application Closed' : 'Apply Now'}
-              {currentDrive.status !== 'closed' && <ExternalLink className="w-5 h-5" />}
+              {isApplying ? 'Processing...' : 
+               hasApplied ? 'Already Applied' : 
+               currentDrive.status === 'closed' ? 'Application Closed' : 
+               !isEligible ? 'Not Eligible' : 
+               isProfileIncomplete ? 'Complete Profile' : 'Apply Now'}
+              {currentDrive.status === 'open' && isEligible && !isProfileIncomplete && !hasApplied && !isApplying && <ExternalLink className="w-5 h-5" />}
             </button>
-            <p className="text-center text-[11px] text-neutral-400 font-bold mt-4 uppercase tracking-widest">
-              Review eligibility before applying
+            <p className={`text-center text-[11px] font-bold mt-4 uppercase tracking-widest ${!isEligible ? 'text-rose-500' : 'text-neutral-400'}`}>
+              {!isEligible ? reason : 'Review eligibility before applying'}
             </p>
           </motion.div>
 
