@@ -59,24 +59,30 @@ const applicationSlice = createSlice({
       .addCase(applyToDriveAction.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.message = action.payload.message;
+        state.message = action.payload?.message || 'Application submitted successfully';
+        // Immediately prepend the new application so the dashboard stats
+        // and Applications page update without a separate re-fetch.
+        if (action.payload?.data) {
+          state.applications.unshift(action.payload.data);
+        }
       })
       .addCase(applyToDriveAction.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload || 'Failed to submit application';
       })
       .addCase(getMyApplicationsAction.pending, (state) => {
         state.isLoading = true;
       })
       .addCase(getMyApplicationsAction.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.applications = action.payload.data;
+        // Safe fallback to [] if data is missing or malformed
+        state.applications = action.payload?.data ?? [];
       })
       .addCase(getMyApplicationsAction.rejected, (state, action) => {
         state.isLoading = false;
         state.isError = true;
-        state.message = action.payload;
+        state.message = action.payload || 'Failed to fetch applications';
       });
   },
 });
