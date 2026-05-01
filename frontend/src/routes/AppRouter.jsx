@@ -22,6 +22,7 @@ import HRDashboard from '../pages/dashboard/HRDashboard';
 // Route guards
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
+import PublicRoute from './PublicRoute';
 
 import { ROLES } from '../constants/roles';
 
@@ -29,9 +30,30 @@ const AppRouter = () => {
   return (
     <Routes>
       {/* Public auth routes */}
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/admin/login"
+        element={
+          <PublicRoute>
+            <AdminLoginPage />
+          </PublicRoute>
+        }
+      />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
