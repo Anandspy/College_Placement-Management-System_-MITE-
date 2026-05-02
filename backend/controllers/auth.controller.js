@@ -385,10 +385,10 @@ const forgotPassword = async (req, res, next) => {
     // ALWAYS return 200 — never confirm if email exists (security)
     const genericMessage = 'If an account with this email exists, a reset link has been sent.';
 
-    let user = await User.findOne({ email });
+    let user = await Admin.findOne({ email });
 
     if (!user) {
-      user = await Admin.findOne({ email });
+      user = await User.findOne({ email });
     }
 
     if (!user) {
