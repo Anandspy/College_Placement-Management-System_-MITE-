@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -13,6 +13,8 @@ const ForgotPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get('role');
 
   const {
     register,
@@ -46,7 +48,7 @@ const ForgotPasswordPage = () => {
           <>
             {/* Back link */}
             <Link
-              to="/login"
+              to={role === 'admin' ? '/admin/login' : '/login'}
               className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-700 transition-colors mb-6"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -132,7 +134,7 @@ const ForgotPasswordPage = () => {
             </p>
 
             <Link
-              to="/login"
+              to={role === 'admin' ? '/admin/login' : '/login'}
               className="inline-flex h-11 items-center justify-center rounded-lg border border-neutral-300 bg-white px-8 text-sm font-medium text-neutral-700 hover:bg-neutral-100 transition-all duration-150"
             >
               Back to Login

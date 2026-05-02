@@ -15,6 +15,7 @@ const ResetPasswordPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [pageState, setPageState] = useState('loading'); // loading | valid | invalid | success
+  const [userRole, setUserRole] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -38,7 +39,9 @@ const ResetPasswordPage = () => {
     const validate = async () => {
       try {
         const res = await validateResetToken({ token });
-        if (res.data?.data?.valid) {
+        const data = res.data?.data;
+        if (data?.valid) {
+          setUserRole(data.role);
           setPageState('valid');
         } else {
           setPageState('invalid');
@@ -152,7 +155,7 @@ const ResetPasswordPage = () => {
             </p>
 
             <Link
-              to="/login"
+              to={userRole === 'admin' ? '/admin/login' : '/login'}
               className="inline-flex h-11 items-center justify-center rounded-lg bg-brand-orange px-8 text-sm font-semibold text-white hover:bg-orange-600 transition-all duration-200"
             >
               Go to Login

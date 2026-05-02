@@ -411,6 +411,14 @@ const forgotPassword = async (req, res, next) => {
     // Build reset URL
     const resetURL = `${process.env.FRONTEND_URL}/reset-password/${rawToken}`;
 
+    // Debug: Log reset link to console in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('-----------------------------------------');
+      console.log('PASSWORD RESET LINK (DEV ONLY):');
+      console.log(resetURL);
+      console.log('-----------------------------------------');
+    }
+
     // Send email
     await sendResetEmail(user.fullName, email, resetURL);
 
@@ -449,7 +457,7 @@ const validateResetToken = async (req, res, next) => {
       return ApiResponse.error(res, 'Invalid or expired reset link', 400, { valid: false });
     }
 
-    return ApiResponse.success(res, 'Token is valid', { valid: true });
+    return ApiResponse.success(res, 'Token is valid', { valid: true, role: user.role });
   } catch (error) {
     next(error);
   }

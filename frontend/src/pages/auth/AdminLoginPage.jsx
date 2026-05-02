@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDispatch } from 'react-redux';
@@ -193,7 +193,6 @@ const AdminLoginPage = () => {
               )}
             </div>
 
-            {/* Remember Me */}
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -203,6 +202,10 @@ const AdminLoginPage = () => {
                 />
                 <span className="text-xs text-neutral-400">Remember credentials</span>
               </label>
+              
+              <Link to="/forgot-password?role=admin" size="sm" className="text-xs font-medium text-brand-orange hover:text-orange-400 transition-colors">
+                Forgot Password?
+              </Link>
             </div>
 
             {/* Submit */}
