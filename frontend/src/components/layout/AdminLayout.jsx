@@ -169,8 +169,17 @@ const AdminLayout = ({ children }) => {
                 <p className="text-xs font-bold text-neutral-900">{user?.fullName || 'Super Admin'}</p>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-wider font-medium">Placement Cell</p>
               </div>
-              <div className="h-9 w-9 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center">
-                <span className="text-xs font-bold text-neutral-700">{initials}</span>
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center">
+                  <span className="text-xs font-bold text-neutral-700">{initials}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
               </div>
             </div>
           </div>
