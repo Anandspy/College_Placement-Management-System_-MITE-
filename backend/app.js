@@ -8,6 +8,7 @@ const profileRoutes = require('./routes/profile.routes');
 const driveRoutes = require('./routes/drive.routes');
 const applicationRoutes = require('./routes/application.routes');
 const noticeRoutes = require('./routes/notice.routes');
+const adminRoutes = require('./routes/admin.routes');
 const errorHandler = require('./middleware/error.middleware');
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/drives', driveRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {
