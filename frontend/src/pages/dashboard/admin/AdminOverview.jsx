@@ -1,14 +1,36 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Users, Briefcase, Bell } from 'lucide-react';
 import useAuth from '../../../hooks/useAuth';
+import { getDashboardStats } from '../../../services/admin.service';
 
 const AdminOverview = () => {
   const { user } = useAuth();
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getDashboardStats();
+        if (data.success) {
+          setDashboardStats(data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const stats = [
-    { label: 'Total Students', value: '0', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Active Drives', value: '0', icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Pending Notices', value: '0', icon: Bell, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Total Students', value: dashboardStats?.totalStudents || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Active Drives', value: dashboardStats?.activeDrives || 0, icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Pending Notices', value: dashboardStats?.pendingNotices || 0, icon: Bell, color: 'text-orange-600', bg: 'bg-orange-50' },
   ];
 
   return (
@@ -36,7 +58,11 @@ const AdminOverview = () => {
               <span className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Phase 2</span>
             </div>
             <div>
-              <p className="text-3xl font-bold text-neutral-900">{stat.value}</p>
+              {isLoading ? (
+                <div className="h-9 w-16 bg-neutral-200 animate-pulse rounded"></div>
+              ) : (
+                <p className="text-3xl font-bold text-neutral-900">{stat.value}</p>
+              )}
               <p className="text-sm font-medium text-neutral-500 mt-1">{stat.label}</p>
             </div>
           </div>
