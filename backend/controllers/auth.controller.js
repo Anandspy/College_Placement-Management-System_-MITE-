@@ -381,14 +381,15 @@ const refreshTokenHandler = async (req, res, next) => {
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
+    const sanitizedEmail = email.trim().toLowerCase();
 
     // ALWAYS return 200 — never confirm if email exists (security)
     const genericMessage = 'If an account with this email exists, a reset link has been sent.';
 
-    let user = await Admin.findOne({ email });
+    let user = await Admin.findOne({ email: sanitizedEmail });
 
     if (!user) {
-      user = await User.findOne({ email });
+      user = await User.findOne({ email: sanitizedEmail });
     }
 
     if (!user) {
@@ -420,7 +421,7 @@ const forgotPassword = async (req, res, next) => {
     }
 
     // Send email
-    await sendResetEmail(user.fullName, email, resetURL);
+    await sendResetEmail(user.fullName, sanitizedEmail, resetURL);
 
     return ApiResponse.success(res, genericMessage);
   } catch (error) {
