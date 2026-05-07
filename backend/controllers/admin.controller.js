@@ -1,6 +1,7 @@
 const User = require('../models/User.model');
 const Drive = require('../models/Drive.model');
 const Notice = require('../models/Notice.model');
+const StudentProfile = require('../models/StudentProfile.model');
 
 /**
  * @desc    Get dashboard statistics for admin overview
@@ -67,6 +68,36 @@ exports.getAllStudents = async (req, res, next) => {
       totalPages: Math.ceil(total / parseInt(limit)),
       currentPage: parseInt(page),
       data: students,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get a single student's full profile (User + StudentProfile)
+ * @route   GET /api/admin/students/:id
+ * @access  Private (Admin)
+ */
+exports.getStudentById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findOne({ _id: id, role: 'student' })
+      .select('-password -refreshToken -resetPasswordToken -resetPasswordExpiry');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Student not found.' });
+    }
+
+    const profile = await StudentProfile.findOne({ userId: id });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        profile: profile || null,
+      },
     });
   } catch (error) {
     next(error);

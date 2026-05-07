@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../../api/adminApi';
-import { Search, Filter, ChevronLeft, ChevronRight, User, Mail, BookOpen } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, User, Mail, BookOpen, Eye } from 'lucide-react';
+import StudentProfileModal from './StudentProfileModal';
 
 const DEPARTMENTS = [
   '',
@@ -25,6 +26,7 @@ const StudentDirectory = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
   
   // Pagination and Filtering State
   const [page, setPage] = useState(1);
@@ -151,6 +153,9 @@ const StudentDirectory = () => {
                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -179,6 +184,9 @@ const StudentDirectory = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-8 w-20 bg-gray-200 rounded-lg"></div>
                     </td>
                   </tr>
                 ))
@@ -213,19 +221,31 @@ const StudentDirectory = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md">
-                        N/A
+                        {student.profileComplete != null ? `${student.profileComplete}%` : 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                        N/A
+                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        student.isVerified
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {student.isVerified ? 'Verified' : 'Unverified'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button
+                        onClick={() => setSelectedStudentId(student._id)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View
+                      </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center justify-center">
                       <User className="h-12 w-12 text-gray-300 mb-3" />
                       <p className="text-lg font-medium text-gray-900">No students found</p>
@@ -311,6 +331,14 @@ const StudentDirectory = () => {
           </div>
         )}
       </div>
+
+      {/* Student Profile Modal */}
+      {selectedStudentId && (
+        <StudentProfileModal
+          studentId={selectedStudentId}
+          onClose={() => setSelectedStudentId(null)}
+        />
+      )}
     </div>
   );
 };

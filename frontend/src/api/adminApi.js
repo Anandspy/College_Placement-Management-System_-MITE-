@@ -10,4 +10,9 @@ export const adminApi = {
     const response = await axiosInstance.get('/admin/students', { params });
     return response.data;
   },
+
+  getStudentById: async (id) => {
+    const response = await axiosInstance.get(`/admin/students/${id}`);
+    return response.data;
+  },
 };
