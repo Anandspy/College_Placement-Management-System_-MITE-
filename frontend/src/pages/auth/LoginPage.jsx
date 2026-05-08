@@ -164,9 +164,8 @@ const LoginPage = () => {
                 type="email"
                 placeholder="yourname@mite.ac.in"
                 {...register('email')}
-                className={`h-11 w-full rounded-lg border bg-white pl-10 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange transition-all duration-200 ${
-                  errors.email ? 'border-red-400' : 'border-neutral-300'
-                }`}
+                className={`h-11 w-full rounded-lg border bg-white pl-10 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-brand-orange transition-all duration-200 ${errors.email ? 'border-red-400' : 'border-neutral-300'
+                  }`}
               />
             </div>
             {errors.email && (
