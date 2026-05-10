@@ -20,6 +20,7 @@ import AdminDashboard from '../pages/dashboard/AdminDashboard';
 import HRDashboard from '../pages/dashboard/HRDashboard';
 import AdminOverview from '../pages/dashboard/admin/AdminOverview';
 import StudentDirectory from '../pages/dashboard/admin/StudentDirectory';
+import AdminNoticesPage from '../pages/dashboard/admin/AdminNoticesPage';
 
 // Route guards
 import ProtectedRoute from './ProtectedRoute';
@@ -92,7 +93,7 @@ const AppRouter = () => {
         {/* Placeholder routes for other admin features */}
         <Route path="students" element={<StudentDirectory />} />
         <Route path="drives" element={<div className="p-8 text-center">Drive Management — Coming Soon</div>} />
-        <Route path="notices" element={<div className="p-8 text-center">Notice Board Management — Coming Soon</div>} />
+        <Route path="notices" element={<AdminNoticesPage />} />
         <Route path="settings" element={<div className="p-8 text-center">Admin Settings — Coming Soon</div>} />
       </Route>
       <Route

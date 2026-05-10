@@ -42,6 +42,10 @@ exports.getAllNotices = async (req, res, next) => {
       filter.category = req.query.category;
     }
 
+    if (req.query.search) {
+      filter.title = { $regex: req.query.search, $options: 'i' };
+    }
+
     const limit = parseInt(req.query.limit, 10) || 0;
     const page  = parseInt(req.query.page, 10)  || 1;
     const skip  = limit > 0 ? (page - 1) * limit : 0;
