@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fetchNotices } from '../../../api/noticeApi';
+import { fetchNotices, createNotice, updateNotice, deleteNotice } from '../../../api/noticeApi';
+import toast from 'react-hot-toast';
 import { 
   Search, 
   Filter, 
@@ -12,7 +13,10 @@ import {
   AlertCircle,
   MoreVertical,
   ExternalLink,
-  Clock
+  Clock,
+  X,
+  Edit2,
+  Trash2
 } from 'lucide-react';
 
 const AdminNoticesPage = () => {
@@ -29,6 +33,17 @@ const AdminNoticesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  // Modal & Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('create'); // 'create' | 'edit'
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ title: '', category: 'General', body: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Delete Confirmation State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // Debounce search query
   useEffect(() => {
@@ -76,6 +91,85 @@ const AdminNoticesPage = () => {
   useEffect(() => {
     loadNotices();
   }, [page, debouncedSearch, categoryFilter]);
+
+  const handleOpenModal = (mode, notice = null) => {
+    setModalMode(mode);
+    if (mode === 'edit' && notice) {
+      setEditingId(notice._id);
+      setFormData({
+        title: notice.title,
+        category: notice.category,
+        body: notice.body || '',
+      });
+    } else {
+      setEditingId(null);
+      setFormData({ title: '', category: 'General', body: '' });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormData({ title: '', category: 'General', body: '' });
+    setEditingId(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.title.trim() || !formData.category || !formData.body.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (modalMode === 'create') {
+        await createNotice(formData);
+        toast.success('Notice created successfully');
+      } else {
+        await updateNotice(editingId, formData);
+        toast.success('Notice updated successfully');
+      }
+      handleCloseModal();
+      loadNotices(); // Refresh list
+    } catch (err) {
+      console.error('Error saving notice:', err);
+      toast.error(err.response?.data?.message || 'Failed to save notice');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteRequest = (id) => {
+    setDeletingId(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setIsSubmitting(true);
+      await deleteNotice(deletingId);
+      toast.success('Notice deleted successfully');
+      setShowDeleteConfirm(false);
+      setDeletingId(null);
+      loadNotices(); // Refresh list
+    } catch (err) {
+      console.error('Error deleting notice:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete notice');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeletingId(null);
+  };
 
   const getCategoryStyles = (category) => {
     switch (category) {
@@ -126,6 +220,7 @@ const AdminNoticesPage = () => {
           </p>
         </div>
         <button
+          onClick={() => handleOpenModal('create')}
           className="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl hover:bg-brand-orange/90 transition-all duration-300 font-semibold shadow-lg shadow-brand-orange/20 active:scale-95"
         >
           <Plus className="w-5 h-5" />
@@ -258,11 +353,19 @@ const AdminNoticesPage = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <button className="p-2.5 text-neutral-400 hover:text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all" title="View Details">
-                            <ExternalLink className="w-4.5 h-4.5" />
+                          <button 
+                            onClick={() => handleOpenModal('edit', notice)}
+                            className="p-2.5 text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all" 
+                            title="Edit Notice"
+                          >
+                            <Edit2 className="w-4.5 h-4.5" />
                           </button>
-                          <button className="p-2.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-xl transition-all" title="More Options">
-                            <MoreVertical className="w-4.5 h-4.5" />
+                          <button 
+                            onClick={() => handleDeleteRequest(notice._id)}
+                            className="p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all" 
+                            title="Delete Notice"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
                           </button>
                         </div>
                       </td>
@@ -336,6 +439,139 @@ const AdminNoticesPage = () => {
           </div>
         )}
       </div>
+
+      {/* Notice Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="px-8 py-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50/50">
+                <h2 className="text-xl font-bold text-neutral-900">
+                  {modalMode === 'create' ? 'Draft New Notice' : 'Edit Notice'}
+                </h2>
+                <button 
+                  onClick={handleCloseModal}
+                  className="p-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-full transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-8 overflow-y-auto">
+                <form id="noticeForm" onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 mb-2">Notice Title <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      placeholder="Enter a clear, descriptive title"
+                      className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all outline-none"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 mb-2">Category <span className="text-red-500">*</span></label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all outline-none appearance-none"
+                      required
+                    >
+                      <option value="General">General</option>
+                      <option value="Placement">Placement</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 mb-2">Notice Content <span className="text-red-500">*</span></label>
+                    <textarea
+                      name="body"
+                      value={formData.body}
+                      onChange={handleInputChange}
+                      placeholder="Write the full details of the notice here..."
+                      rows="6"
+                      className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all outline-none resize-none"
+                      required
+                    ></textarea>
+                  </div>
+                </form>
+              </div>
+              
+              <div className="px-8 py-6 border-t border-neutral-100 bg-neutral-50/50 flex justify-end gap-3 mt-auto">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-6 py-2.5 rounded-xl font-semibold text-neutral-600 hover:bg-neutral-200 transition-all"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="noticeForm"
+                  className="px-6 py-2.5 rounded-xl font-semibold bg-brand-blue text-white hover:bg-brand-blue/90 shadow-lg shadow-brand-blue/20 transition-all flex items-center gap-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : null}
+                  {modalMode === 'create' ? 'Publish Notice' : 'Save Changes'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-8 text-center"
+            >
+              <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Delete Notice?</h2>
+              <p className="text-neutral-500 mb-8 leading-relaxed">
+                Are you sure you want to delete this notice? This action will hide it from students and cannot be undone easily.
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="px-6 py-3 rounded-xl font-semibold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 transition-all flex-1"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-6 py-3 rounded-xl font-semibold bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all flex-1 flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : 'Yes, Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
