@@ -1,0 +1,321 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { fetchDrives } from '../../../api/driveApi';
+import toast from 'react-hot-toast';
+import { 
+  Search, 
+  Filter, 
+  ChevronRight, 
+  Briefcase, 
+  Calendar, 
+  Plus,
+  AlertCircle,
+  MoreVertical,
+  ExternalLink,
+  MapPin,
+  IndianRupee,
+  Building2
+} from 'lucide-react';
+
+const AdminDrivesPage = () => {
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  // Filtering State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Handle status filter change
+  const handleStatusChange = (e) => {
+    setStatusFilter(e.target.value);
+  };
+
+  const loadDrives = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const params = {};
+      if (statusFilter) {
+        params.status = statusFilter;
+      }
+      
+      const response = await fetchDrives(params);
+      
+      if (response.success) {
+        // Backend doesn't support search param currently, so we filter locally
+        let fetchedDrives = response.data;
+        if (debouncedSearch) {
+          const lowerQuery = debouncedSearch.toLowerCase();
+          fetchedDrives = fetchedDrives.filter(drive => 
+            drive.companyName.toLowerCase().includes(lowerQuery) ||
+            drive.jobRole.toLowerCase().includes(lowerQuery)
+          );
+        }
+        setDrives(fetchedDrives);
+      } else {
+        setError(response.message || 'Failed to fetch drives.');
+      }
+    } catch (err) {
+      console.error('Error fetching drives:', err);
+      setError(err.response?.data?.message || 'An error occurred while fetching drives.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDrives();
+  }, [statusFilter, debouncedSearch]);
+
+  const getStatusStyles = (status) => {
+    switch (status) {
+      case 'open':
+        return 'bg-green-50 text-green-700 border-green-100';
+      case 'upcoming':
+        return 'bg-brand-blue-light text-brand-blue border-brand-blue-light';
+      case 'closed':
+        return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+      default:
+        return 'bg-neutral-100 text-neutral-700 border-neutral-200';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.4, staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  };
+
+  return (
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="max-w-7xl mx-auto space-y-8"
+    >
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Placement Drives</h1>
+          <p className="text-neutral-500 mt-2 flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Manage campus recruitment opportunities
+          </p>
+        </div>
+        <button
+          className="inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl hover:bg-brand-orange/90 transition-all duration-300 font-semibold shadow-lg shadow-brand-orange/20 active:scale-95 opacity-50 cursor-not-allowed"
+          title="Create drive functionality coming soon"
+        >
+          <Plus className="w-5 h-5" />
+          Create New Drive
+        </button>
+      </div>
+
+      {/* Control Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="md:col-span-8 relative">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-neutral-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by company or job role..."
+            className="block w-full pl-12 pr-4 py-3.5 bg-white border border-neutral-200 rounded-2xl focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all outline-none shadow-sm placeholder:text-neutral-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="md:col-span-4 relative">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <Filter className="h-5 w-5 text-neutral-400" />
+          </div>
+          <select
+            className="block w-full pl-12 pr-10 py-3.5 bg-white border border-neutral-200 rounded-2xl focus:ring-2 focus:ring-brand-orange/20 focus:border-brand-orange transition-all outline-none shadow-sm appearance-none cursor-pointer"
+            value={statusFilter}
+            onChange={handleStatusChange}
+          >
+            <option value="">All Statuses</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+          <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+            <ChevronRight className="h-4 w-4 text-neutral-400 rotate-90" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Card */}
+      <div className="bg-white rounded-3xl shadow-xl shadow-neutral-200/50 border border-neutral-100 overflow-hidden">
+        {error && (
+          <div className="p-4 bg-red-50 border-b border-red-100 flex items-center gap-3 text-red-600">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm font-medium">{error}</span>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-neutral-50/50">
+                <th className="px-8 py-5 text-left text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-100">
+                  Company
+                </th>
+                <th className="px-6 py-5 text-left text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-100">
+                  Role & Package
+                </th>
+                <th className="px-6 py-5 text-left text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-100">
+                  Deadline
+                </th>
+                <th className="px-6 py-5 text-left text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-100">
+                  Status
+                </th>
+                <th className="px-8 py-5 text-right text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-neutral-100">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  [...Array(5)].map((_, index) => (
+                    <motion.tr 
+                      key={`skeleton-${index}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="animate-pulse"
+                    >
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-neutral-100"></div>
+                          <div>
+                            <div className="h-4 w-32 bg-neutral-100 rounded-full mb-2"></div>
+                            <div className="h-3 w-20 bg-neutral-50 rounded-full"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="h-4 w-40 bg-neutral-100 rounded-full mb-2"></div>
+                        <div className="h-3 w-24 bg-neutral-50 rounded-full"></div>
+                      </td>
+                      <td className="px-6 py-6"><div className="h-4 w-28 bg-neutral-100 rounded-full"></div></td>
+                      <td className="px-6 py-6"><div className="h-7 w-20 bg-neutral-100 rounded-xl"></div></td>
+                      <td className="px-8 py-6"><div className="h-8 w-8 bg-neutral-100 rounded-lg ml-auto"></div></td>
+                    </motion.tr>
+                  ))
+                ) : drives.length > 0 ? (
+                  drives.map((drive) => (
+                    <motion.tr 
+                      key={drive._id}
+                      variants={itemVariants}
+                      className="group hover:bg-neutral-50/80 transition-all duration-300"
+                    >
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200">
+                            {drive.companyLogo ? (
+                              <img src={drive.companyLogo} alt={drive.companyName} className="w-6 h-6 object-contain" />
+                            ) : (
+                              <Building2 className="w-5 h-5 text-neutral-400" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-sm font-bold text-neutral-900 group-hover:text-brand-blue transition-colors block">
+                              {drive.companyName}
+                            </span>
+                            <span className="text-xs text-neutral-500 mt-1 flex items-center gap-1 font-medium">
+                              <MapPin className="w-3 h-3" />
+                              {drive.location || 'Multiple Locations'}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-sm font-bold text-neutral-800 flex items-center gap-1.5">
+                            <Briefcase className="w-3.5 h-3.5 text-neutral-400" />
+                            {drive.jobRole}
+                          </span>
+                          <span className="text-xs font-semibold text-brand-green flex items-center gap-1">
+                            <IndianRupee className="w-3 h-3" />
+                            {drive.ctc}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex items-center gap-2 text-sm text-neutral-600 font-medium">
+                          <Calendar className="w-4 h-4 text-neutral-400" />
+                          {formatDate(drive.registrationDeadline)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-6">
+                        <span className={`px-3.5 py-1.5 inline-flex text-[11px] font-bold rounded-xl border ${getStatusStyles(drive.status)} uppercase tracking-wider`}>
+                          {drive.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button 
+                            className="p-2 text-neutral-400 hover:text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all" 
+                            title="View Details"
+                          >
+                            <ExternalLink className="w-4.5 h-4.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <td colSpan="5" className="px-8 py-20 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                        <div className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center mb-6">
+                          <Briefcase className="h-10 w-10 text-neutral-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-neutral-900">No drives found</h3>
+                        <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
+                          We couldn't find any placement drives matching your criteria.
+                        </p>
+                      </div>
+                    </td>
+                  </motion.tr>
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default AdminDrivesPage;
