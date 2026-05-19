@@ -124,12 +124,11 @@ driveSchema.set('toJSON', { virtuals: true });
 driveSchema.set('toObject', { virtuals: true });
 
 // Only return active drives in queries by default
-driveSchema.pre(/^find/, function (next) {
+driveSchema.pre(/^find/, function () {
   // Allow bypassing for admin queries by passing { isActive: { $exists: true } }
   if (this.getFilter().isActive === undefined) {
     this.where({ isActive: true });
   }
-  next();
 });
 
 const Drive = mongoose.model('Drive', driveSchema);

@@ -28,6 +28,9 @@ export const getDriveById = createAsyncThunk(
 
 const initialState = {
   drives: [],
+  total: 0,
+  page: 1,
+  pages: 1,
   currentDrive: null,
   isLoading: false,
   isError: false,
@@ -62,7 +65,16 @@ export const driveSlice = createSlice({
       })
       .addCase(getDrives.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.drives = action.payload.data;
+        if (action.payload?.data && Array.isArray(action.payload.data.drives)) {
+          state.drives = action.payload.data.drives;
+          state.total = action.payload.data.total;
+          state.page = action.payload.data.page;
+          state.pages = action.payload.data.pages;
+        } else if (Array.isArray(action.payload?.data)) {
+          state.drives = action.payload.data;
+        } else {
+          state.drives = [];
+        }
       })
       .addCase(getDrives.rejected, (state, action) => {
         state.isLoading = false;

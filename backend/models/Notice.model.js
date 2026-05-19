@@ -42,12 +42,11 @@ const noticeSchema = new mongoose.Schema(
 );
 
 // Only return active notices in queries by default
-noticeSchema.pre(/^find/, function (next) {
+noticeSchema.pre(/^find/, function () {
   // Allow bypassing for admin queries by passing { isActive: { $exists: true } }
   if (this.getFilter().isActive === undefined) {
     this.where({ isActive: true });
   }
-  next();
 });
 
 const Notice = mongoose.model('Notice', noticeSchema);
