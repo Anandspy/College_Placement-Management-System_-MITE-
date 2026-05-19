@@ -18,6 +18,7 @@ import {
   Edit2
 } from 'lucide-react';
 import DriveModal from './components/DriveModal';
+import DriveDetailsModal from './components/DriveDetailsModal';
 
 const AdminDrivesPage = () => {
   const [drives, setDrives] = useState([]);
@@ -34,6 +35,10 @@ const AdminDrivesPage = () => {
   const [modalMode, setModalMode] = useState('create');
   const [currentDrive, setCurrentDrive] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Details Modal State
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [viewingDrive, setViewingDrive] = useState(null);
 
   // Debounce search query
   useEffect(() => {
@@ -95,6 +100,16 @@ const AdminDrivesPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCurrentDrive(null);
+  };
+
+  const handleViewDetails = (drive) => {
+    setViewingDrive(drive);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
+    setTimeout(() => setViewingDrive(null), 300); // delay clear for exit animation
   };
 
   const handleDriveSubmit = async (formData) => {
@@ -328,6 +343,7 @@ const AdminDrivesPage = () => {
                             <Edit2 className="w-4.5 h-4.5" />
                           </button>
                           <button 
+                            onClick={() => handleViewDetails(drive)}
                             className="p-2 text-neutral-400 hover:text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all" 
                             title="View Details"
                           >
@@ -342,15 +358,29 @@ const AdminDrivesPage = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    <td colSpan="5" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                        <div className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center mb-6">
-                          <Briefcase className="h-10 w-10 text-neutral-300" />
-                        </div>
-                        <h3 className="text-xl font-bold text-neutral-900">No drives found</h3>
-                        <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
-                          We couldn't find any placement drives matching your criteria.
+                    <td colSpan="5" className="px-8 py-24 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-md mx-auto">
+                        <motion.div 
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                          className="w-24 h-24 bg-brand-orange/5 rounded-[2rem] flex items-center justify-center mb-6 relative overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-tr from-brand-orange/10 to-transparent"></div>
+                          <Briefcase className="h-10 w-10 text-brand-orange relative z-10" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold text-neutral-900 mb-2">No Drives Found</h3>
+                        <p className="text-neutral-500 text-sm leading-relaxed">
+                          We couldn't find any placement drives matching your current criteria. Try adjusting your search filters or create a new drive to get started.
                         </p>
+                        {searchQuery || statusFilter ? (
+                          <button 
+                            onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
+                            className="mt-6 px-6 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold rounded-xl transition-colors"
+                          >
+                            Clear Filters
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </motion.tr>
@@ -368,6 +398,12 @@ const AdminDrivesPage = () => {
         initialData={currentDrive}
         onSubmit={handleDriveSubmit}
         isSubmitting={isSubmitting}
+      />
+
+      <DriveDetailsModal 
+        isOpen={isDetailsModalOpen}
+        onClose={handleCloseDetails}
+        drive={viewingDrive}
       />
     </motion.div>
   );

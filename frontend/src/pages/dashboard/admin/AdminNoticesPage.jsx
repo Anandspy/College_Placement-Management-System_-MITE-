@@ -376,15 +376,29 @@ const AdminNoticesPage = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
-                    <td colSpan="5" className="px-8 py-20 text-center">
-                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
-                        <div className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center mb-6">
-                          <FileText className="h-10 w-10 text-neutral-300" />
-                        </div>
-                        <h3 className="text-xl font-bold text-neutral-900">No notices to display</h3>
-                        <p className="text-neutral-500 mt-2 text-sm leading-relaxed">
-                          We couldn't find any notices matching your criteria. Try adjusting your search or filters.
+                    <td colSpan="5" className="px-8 py-24 text-center">
+                      <div className="flex flex-col items-center justify-center max-w-md mx-auto">
+                        <motion.div 
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                          className="w-24 h-24 bg-brand-blue/5 rounded-[2rem] flex items-center justify-center mb-6 relative overflow-hidden"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-tr from-brand-blue/10 to-transparent"></div>
+                          <FileText className="h-10 w-10 text-brand-blue relative z-10" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold text-neutral-900 mb-2">No Notices Displayed</h3>
+                        <p className="text-neutral-500 text-sm leading-relaxed">
+                          There are currently no announcements matching your filters. Clear your search or create a new notice to keep everyone informed.
                         </p>
+                        {searchQuery || categoryFilter ? (
+                          <button 
+                            onClick={() => { setSearchQuery(''); setCategoryFilter(''); }}
+                            className="mt-6 px-6 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold rounded-xl transition-colors"
+                          >
+                            Clear Filters
+                          </button>
+                        ) : null}
                       </div>
                     </td>
                   </motion.tr>
