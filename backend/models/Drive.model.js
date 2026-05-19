@@ -91,6 +91,10 @@ const driveSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
@@ -118,6 +122,15 @@ driveSchema.pre('save', function (next) {
 // Allow virtuals in JSON
 driveSchema.set('toJSON', { virtuals: true });
 driveSchema.set('toObject', { virtuals: true });
+
+// Only return active drives in queries by default
+driveSchema.pre(/^find/, function (next) {
+  // Allow bypassing for admin queries by passing { isActive: { $exists: true } }
+  if (this.getFilter().isActive === undefined) {
+    this.where({ isActive: true });
+  }
+  next();
+});
 
 const Drive = mongoose.model('Drive', driveSchema);
 

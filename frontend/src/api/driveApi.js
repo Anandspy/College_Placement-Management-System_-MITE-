@@ -36,3 +36,12 @@ export const updateDrive = async (id, driveData) => {
   const response = await api.patch(`/drives/${id}`, driveData);
   return response.data;
 };
+
+/**
+ * Delete a drive (soft delete)
+ * @param {String} id - Drive ID
+ */
+export const deleteDrive = async (id) => {
+  const response = await api.delete(`/drives/${id}`);
+  return response.data;
+};

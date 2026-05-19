@@ -38,12 +38,13 @@ exports.getAllNotices = async (req, res, next) => {
   try {
     const filter = {}; // isActive: true is applied automatically by pre-find hook
 
-    if (req.query.category) {
+    if (req.query.category && typeof req.query.category === 'string') {
       filter.category = req.query.category;
     }
 
-    if (req.query.search) {
-      filter.title = { $regex: req.query.search, $options: 'i' };
+    if (req.query.search && typeof req.query.search === 'string') {
+      const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.title = { $regex: escapeRegex(req.query.search), $options: 'i' };
     }
 
     const limit = parseInt(req.query.limit, 10) || 0;

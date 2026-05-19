@@ -28,23 +28,41 @@ exports.createDrive = async (req, res, next) => {
  */
 exports.getAllDrives = async (req, res, next) => {
   try {
-    // Basic filtering based on status
     const filter = {};
-    if (req.query.status) {
+    if (req.query.status && typeof req.query.status === 'string') {
       filter.status = req.query.status;
     }
 
-    // Limit and sorting (default latest first)
-    const limit = parseInt(req.query.limit, 10) || 0; // 0 means no limit
-    const drivesQuery = Drive.find(filter).sort({ createdAt: -1 });
-    
-    if (limit > 0) {
-      drivesQuery.limit(limit);
+    if (req.query.search && typeof req.query.search === 'string') {
+      const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const searchRegex = new RegExp(escapeRegex(req.query.search), 'i');
+      filter.$or = [
+        { companyName: searchRegex },
+        { jobRole: searchRegex }
+      ];
     }
 
-    const drives = await drivesQuery;
+    const limit = parseInt(req.query.limit, 10) || 0;
+    const page  = parseInt(req.query.page, 10)  || 1;
+    const skip  = limit > 0 ? (page - 1) * limit : 0;
 
-    return ApiResponse.success(res, 'Drives fetched successfully', drives);
+    const query = Drive.find(filter).sort({ createdAt: -1 });
+    
+    if (limit > 0) {
+      query.skip(skip).limit(limit);
+    }
+
+    const [drives, total] = await Promise.all([
+      query,
+      Drive.countDocuments(filter),
+    ]);
+
+    return ApiResponse.success(res, 'Drives fetched successfully', {
+      drives,
+      total,
+      page,
+      pages: limit > 0 ? Math.ceil(total / limit) : 1,
+    });
   } catch (error) {
     next(error);
   }
@@ -102,11 +120,18 @@ exports.updateDrive = async (req, res, next) => {
  */
 exports.deleteDrive = async (req, res, next) => {
   try {
-    const drive = await Drive.findByIdAndDelete(req.params.id);
+    // Bypass the isActive pre-find hook to find the raw document
+    const drive = await Drive.findOne({
+      _id: req.params.id,
+      isActive: { $exists: true },
+    });
 
     if (!drive) {
       return ApiResponse.error(res, 'Drive not found', 404);
     }
+
+    drive.isActive = false;
+    await drive.save();
 
     return ApiResponse.success(res, 'Drive deleted successfully');
   } catch (error) {
