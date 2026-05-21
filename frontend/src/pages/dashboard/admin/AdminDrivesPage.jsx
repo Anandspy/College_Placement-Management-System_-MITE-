@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchDrives, createDrive, updateDrive, deleteDrive } from '../../../api/driveApi';
 import toast from 'react-hot-toast';
-import { 
-  Search, 
-  Filter, 
-  ChevronRight, 
-  Briefcase, 
-  Calendar, 
+import {
+  Search,
+  Filter,
+  ChevronRight,
+  Briefcase,
+  Calendar,
   Plus,
   AlertCircle,
   MoreVertical,
@@ -26,13 +26,13 @@ const AdminDrivesPage = () => {
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Pagination State
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [limit] = useState(10);
-  
+
   // Filtering State
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -47,7 +47,7 @@ const AdminDrivesPage = () => {
   const [modalMode, setModalMode] = useState('create');
   const [currentDrive, setCurrentDrive] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Details Modal State
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [viewingDrive, setViewingDrive] = useState(null);
@@ -71,16 +71,16 @@ const AdminDrivesPage = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const params = {
         page,
         limit,
         search: debouncedSearch || undefined,
         status: statusFilter || undefined,
       };
-      
+
       const response = await fetchDrives(params);
-      
+
       if (response.success) {
         setDrives(response.data.drives);
         setTotalPages(response.data.pages);
@@ -187,8 +187,8 @@ const AdminDrivesPage = () => {
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.4, staggerChildren: 0.1 }
     }
@@ -200,7 +200,7 @@ const AdminDrivesPage = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -293,7 +293,7 @@ const AdminDrivesPage = () => {
               <AnimatePresence mode="wait">
                 {loading ? (
                   [...Array(5)].map((_, index) => (
-                    <motion.tr 
+                    <motion.tr
                       key={`skeleton-${index}`}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -320,7 +320,7 @@ const AdminDrivesPage = () => {
                   ))
                 ) : drives.length > 0 ? (
                   drives.map((drive) => (
-                    <motion.tr 
+                    <motion.tr
                       key={drive._id}
                       variants={itemVariants}
                       className="group hover:bg-neutral-50/80 transition-all duration-300"
@@ -370,23 +370,23 @@ const AdminDrivesPage = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <button 
+                          <button
                             onClick={() => handleOpenModal('edit', drive)}
-                            className="p-2 text-brand-orange hover:bg-brand-orange/10 rounded-xl transition-all" 
+                            className="p-2 text-brand-orange hover:bg-brand-orange/10 rounded-xl transition-all"
                             title="Edit Drive"
                           >
                             <Edit2 className="w-4.5 h-4.5" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleViewDetails(drive)}
-                            className="p-2 text-neutral-400 hover:text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all" 
+                            className="p-2 text-neutral-400 hover:text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all"
                             title="View Details"
                           >
                             <ExternalLink className="w-4.5 h-4.5" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleDeleteRequest(drive._id)}
-                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all" 
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
                             title="Delete Drive"
                           >
                             <Trash2 className="w-4.5 h-4.5" />
@@ -402,7 +402,7 @@ const AdminDrivesPage = () => {
                   >
                     <td colSpan="5" className="px-8 py-24 text-center">
                       <div className="flex flex-col items-center justify-center max-w-md mx-auto">
-                        <motion.div 
+                        <motion.div
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -416,7 +416,7 @@ const AdminDrivesPage = () => {
                           We couldn't find any placement drives matching your current criteria. Try adjusting your search filters or create a new drive to get started.
                         </p>
                         {searchQuery || statusFilter ? (
-                          <button 
+                          <button
                             onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
                             className="mt-6 px-6 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold rounded-xl transition-colors"
                           >
@@ -440,7 +440,7 @@ const AdminDrivesPage = () => {
               <span className="text-neutral-900 font-bold">{Math.min(page * limit, totalCount)}</span> of{' '}
               <span className="text-neutral-900 font-bold">{totalCount}</span>
             </p>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -449,17 +449,16 @@ const AdminDrivesPage = () => {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              
+
               <div className="flex items-center gap-1">
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i + 1}
                     onClick={() => setPage(i + 1)}
-                    className={`min-w-[40px] h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${
-                      page === i + 1
+                    className={`min-w-[40px] h-10 rounded-xl text-sm font-bold transition-all shadow-sm ${page === i + 1
                         ? 'bg-brand-blue text-white shadow-brand-blue/20'
                         : 'bg-white border border-neutral-200 text-neutral-600 hover:border-brand-blue/30 hover:text-brand-blue'
-                    }`}
+                      }`}
                   >
                     {i + 1}
                   </button>
@@ -487,7 +486,7 @@ const AdminDrivesPage = () => {
         isSubmitting={isSubmitting}
       />
 
-      <DriveDetailsModal 
+      <DriveDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={handleCloseDetails}
         drive={viewingDrive}

@@ -18,10 +18,17 @@ const verifyAccessToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-    let user = await User.findById(decoded.id).select('-password -refreshToken');
-
-    if (!user) {
+    let user;
+    if (decoded.role === 'admin') {
       user = await Admin.findById(decoded.id).select('-password -refreshToken');
+      if (!user) {
+        user = await User.findById(decoded.id).select('-password -refreshToken');
+      }
+    } else {
+      user = await User.findById(decoded.id).select('-password -refreshToken');
+      if (!user) {
+        user = await Admin.findById(decoded.id).select('-password -refreshToken');
+      }
     }
 
     if (!user) {

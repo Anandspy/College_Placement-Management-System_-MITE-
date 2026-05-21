@@ -85,11 +85,8 @@ axiosInstance.interceptors.response.use(
 
         // Update Redux store
         if (storeRef) {
-          const { setAccessToken } = await import('./authApi');
-          storeRef.dispatch({
-            type: 'auth/setAccessToken',
-            payload: newToken,
-          });
+          const { setAccessToken } = await import('../features/auth/authSlice');
+          storeRef.dispatch(setAccessToken(newToken));
         }
 
         processQueue(null, newToken);

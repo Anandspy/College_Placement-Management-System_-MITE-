@@ -2,11 +2,11 @@ const rateLimit = require('express-rate-limit');
 
 /**
  * Rate limiter for auth routes (login, register)
- * 10 requests per 15 minutes
+ * 100 requests per 15 minutes (configurable)
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: parseInt(process.env.AUTH_LIMIT_MAX, 10) || 100,
   message: {
     success: false,
     message: 'Too many attempts. Please try again in 15 minutes.',
