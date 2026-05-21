@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { Loader2 } from 'lucide-react';
 import AppRouter from './routes/AppRouter';
+import { refreshAccessToken } from './features/auth/authThunks';
 
 function App() {
+  const dispatch = useDispatch();
+  const { isInitialized } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(refreshAccessToken());
+  }, [dispatch]);
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
+        <p className="text-gray-600 font-medium animate-pulse">Initializing session...</p>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       {/* React Hot Toast Notifications */}

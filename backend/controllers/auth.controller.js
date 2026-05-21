@@ -366,8 +366,25 @@ const refreshTokenHandler = async (req, res, next) => {
     // Issue new access token
     const newAccessToken = user.generateAccessToken();
 
+    let payloadUser = {
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    };
+
+    if (user.role === 'student' || user.role === 'hr') {
+      payloadUser = {
+        ...payloadUser,
+        department: user.department,
+        usnNumber: user.usnNumber,
+        yearOfStudy: user.yearOfStudy,
+      };
+    }
+
     return ApiResponse.success(res, 'Token refreshed', {
       accessToken: newAccessToken,
+      user: payloadUser,
     });
   } catch (error) {
     next(error);

@@ -5,6 +5,7 @@ const initialState = {
   accessToken: null,
   role: null,
   isAuthenticated: false,
+  isInitialized: false,
   loading: false,
   error: null,
 };
@@ -19,6 +20,7 @@ const authSlice = createSlice({
       state.accessToken = accessToken;
       state.role = user?.role || null;
       state.isAuthenticated = true;
+      state.isInitialized = true;
       state.loading = false;
       state.error = null;
     },
@@ -30,8 +32,12 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.role = null;
       state.isAuthenticated = false;
+      state.isInitialized = true;
       state.loading = false;
       state.error = null;
+    },
+    setInitialized: (state) => {
+      state.isInitialized = true;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -43,7 +49,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setAccessToken, clearCredentials, setLoading, setError } =
+export const { setCredentials, setAccessToken, clearCredentials, setInitialized, setLoading, setError } =
   authSlice.actions;
 
 export default authSlice.reducer;

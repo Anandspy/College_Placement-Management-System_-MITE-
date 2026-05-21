@@ -57,7 +57,12 @@ export const refreshAccessToken = createAsyncThunk(
   async (_, { dispatch, rejectWithValue }) => {
     try {
       const { data } = await refreshApi();
-      dispatch(setAccessToken(data.data.accessToken));
+      dispatch(
+        setCredentials({
+          user: data.data.user,
+          accessToken: data.data.accessToken,
+        })
+      );
       return data;
     } catch (error) {
       dispatch(clearCredentials());
