@@ -4,7 +4,7 @@ const Admin = require('../models/Admin.model');
 const OTP = require('../models/OTP.model');
 const generateOTP = require('../utils/generateOTP');
 const ApiResponse = require('../utils/ApiResponse');
-const { sendOTPEmail, sendResetEmail } = require('../services/email.service');
+const { sendOTPEmail, sendResetEmail, sendAdminOTPEmail } = require('../services/email.service');
 
 /**
  * POST /api/auth/register
@@ -231,8 +231,8 @@ const login = async (req, res, next) => {
 };
 
 /**
- * POST /api/auth/admin-login
- * Dedicated Login for Admins
+ * POST /api/auth/admin-login  (Step 1)
+ * Validates admin credentials and sends OTP — does NOT issue JWT yet.
  */
 const adminLogin = async (req, res, next) => {
   try {
@@ -242,22 +242,106 @@ const adminLogin = async (req, res, next) => {
     // Find ONLY in Admin collection
     const admin = await Admin.findOne({ email: sanitizedEmail });
 
+    // Timing-safe: always compare even if admin not found (use dummy string)
+    const dummyAdmin = { comparePassword: async () => false };
+    const target = admin || dummyAdmin;
+    const isMatch = await target.comparePassword(password);
+
+    if (!admin || !isMatch) {
+      return ApiResponse.error(res, 'Incorrect email or password', 401);
+    }
+
+    // --- Credentials valid: issue OTP challenge ---
+    const otp = generateOTP();
+
+    // Delete any previous OTP for this admin email
+    await OTP.deleteMany({ email: sanitizedEmail });
+
+    // Save hashed OTP (pre-save hook handles hashing)
+    await OTP.create({
+      email: sanitizedEmail,
+      otp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+    });
+
+    // Send OTP to admin email
+    await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
+
+    // In dev, log OTP to console so you can test without email
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('--------------------------------------------');
+      console.log('ADMIN OTP (DEV ONLY):', otp);
+      console.log('--------------------------------------------');
+    }
+
+    return ApiResponse.success(
+      res,
+      'Credentials verified. An OTP has been sent to your registered email.',
+      {
+        otpSent: true,
+        email: sanitizedEmail,
+        mustChangePassword: admin.mustChangePassword,
+      },
+      200
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/auth/admin-verify-otp  (Step 2)
+ * Verifies the OTP and issues JWT + refresh token.
+ */
+const adminVerifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    // Find admin
+    const admin = await Admin.findOne({ email: sanitizedEmail });
     if (!admin) {
-      return ApiResponse.error(res, 'Incorrect email or password', 401);
+      return ApiResponse.error(res, 'Admin account not found', 404);
     }
 
-    // Compare password
-    const isMatch = await admin.comparePassword(password);
+    // Find OTP record
+    const otpRecord = await OTP.findOne({ email: sanitizedEmail });
+    if (!otpRecord) {
+      return ApiResponse.error(res, 'OTP not found or has expired. Please start over.', 400);
+    }
 
+    // Check max attempts
+    if (otpRecord.attempts >= 5) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return ApiResponse.error(res, 'Too many wrong attempts. Please log in again.', 400);
+    }
+
+    // Check expiry
+    if (otpRecord.expiresAt < new Date()) {
+      await OTP.deleteOne({ _id: otpRecord._id });
+      return ApiResponse.error(res, 'OTP has expired. Please log in again.', 400);
+    }
+
+    // Compare OTP
+    const isMatch = await otpRecord.compareOTP(otp);
     if (!isMatch) {
-      return ApiResponse.error(res, 'Incorrect email or password', 401);
+      otpRecord.attempts += 1;
+      await otpRecord.save();
+      const remaining = 5 - otpRecord.attempts;
+      return ApiResponse.error(
+        res,
+        `Invalid OTP. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`,
+        400
+      );
     }
+
+    // OTP is valid — delete it immediately
+    await OTP.deleteOne({ _id: otpRecord._id });
 
     // Generate tokens
     const accessToken = admin.generateAccessToken();
     const refreshToken = admin.generateRefreshToken();
 
-    // Store hashed refresh token
     const hashedRefreshToken = crypto
       .createHash('sha256')
       .update(refreshToken)
@@ -280,6 +364,7 @@ const adminLogin = async (req, res, next) => {
       fullName: admin.fullName,
       email: admin.email,
       role: admin.role,
+      mustChangePassword: admin.mustChangePassword,
     };
 
     return ApiResponse.success(res, 'Admin login successful', {
@@ -566,6 +651,44 @@ const updateVerifyEmail = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/auth/admin-change-password
+ * Allows a logged-in admin (who has mustChangePassword: true) to change their password
+ */
+const adminChangePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch fresh Admin document
+    const admin = await Admin.findById(req.user._id);
+    if (!admin) {
+      return ApiResponse.error(res, 'Admin account not found', 404);
+    }
+
+    // Verify current password
+    const isMatch = await admin.comparePassword(currentPassword);
+    if (!isMatch) {
+      return ApiResponse.error(res, 'Incorrect current password', 400);
+    }
+
+    // Make sure new password is not the same
+    const isSame = await admin.comparePassword(newPassword);
+    if (isSame) {
+      return ApiResponse.error(res, 'New password must be different from current password', 400);
+    }
+
+    // Update password
+    admin.password = newPassword;
+    admin.mustChangePassword = false;
+    admin.refreshToken = null; // Invalidate refresh token for security
+    await admin.save();
+
+    return ApiResponse.success(res, 'Password changed successfully. Please log in again.');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   verifyEmail,
@@ -573,9 +696,11 @@ module.exports = {
   updateVerifyEmail,
   login,
   adminLogin,
+  adminVerifyOtp,
   logout,
   refreshTokenHandler,
   forgotPassword,
   validateResetToken,
   resetPassword,
+  adminChangePassword,
 };

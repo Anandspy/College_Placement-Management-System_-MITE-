@@ -10,9 +10,9 @@ const startServer = async () => {
     await connectDB();
 
     app.listen(PORT, () => {
-      console.log(`\n🚀 Server running on port ${PORT}`);
-      console.log(`📡 API: http://localhost:${PORT}/api`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+      console.log(`\n Server running on port ${PORT}`);
+      console.log(`API: http://localhost:${PORT}/api`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);

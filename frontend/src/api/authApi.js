@@ -20,9 +20,13 @@ export const updateVerifyEmail = (data) =>
 export const loginUser = (data) =>
   axiosInstance.post('/auth/login', data);
 
-// Admin Login
+// Admin Login (Step 1 — password check, sends OTP)
 export const loginAdmin = (data) =>
   axiosInstance.post('/auth/admin-login', data);
+
+// Admin Verify OTP (Step 2 — verify OTP, receive JWT)
+export const adminVerifyOtp = (data) =>
+  axiosInstance.post('/auth/admin-verify-otp', data);
 
 // Logout
 export const logoutUser = () =>
@@ -43,3 +47,7 @@ export const validateResetToken = (data) =>
 // Reset Password
 export const resetPassword = (data) =>
   axiosInstance.post('/auth/reset-password', data);
+
+// Admin Change Password (for forced password reset)
+export const adminChangePassword = (data) =>
+  axiosInstance.post('/auth/admin-change-password', data);
