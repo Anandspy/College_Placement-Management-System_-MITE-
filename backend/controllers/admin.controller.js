@@ -2,6 +2,7 @@ const User = require('../models/User.model');
 const Drive = require('../models/Drive.model');
 const Notice = require('../models/Notice.model');
 const StudentProfile = require('../models/StudentProfile.model');
+const Application = require('../models/Application.model');
 
 /**
  * @desc    Get dashboard statistics for admin overview
@@ -12,14 +13,21 @@ exports.getDashboardStats = async (req, res, next) => {
   try {
     const totalStudents = await User.countDocuments({ role: 'student' });
     const activeDrives = await Drive.countDocuments({ status: 'open' });
-    const pendingNotices = await Notice.countDocuments({ isActive: true });
+    
+    // Placed students: unique students who have at least one application with status 'selected'
+    const placedStudentsList = await Application.distinct('studentId', { status: 'selected' });
+    const placedStudents = placedStudentsList.length;
+
+    // Pending applications: applications that have status 'applied'
+    const pendingApplications = await Application.countDocuments({ status: 'applied' });
 
     res.status(200).json({
       success: true,
       data: {
         totalStudents,
         activeDrives,
-        pendingNotices,
+        placedStudents,
+        pendingApplications,
       },
     });
   } catch (error) {

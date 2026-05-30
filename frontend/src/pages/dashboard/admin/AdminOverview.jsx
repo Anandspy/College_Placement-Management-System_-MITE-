@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Users, Briefcase, Bell } from 'lucide-react';
+import { Shield, Users, Briefcase, GraduationCap, Clock } from 'lucide-react';
 import useAuth from '../../../hooks/useAuth';
 import { getDashboardStats } from '../../../services/admin.service';
 
@@ -28,9 +28,10 @@ const AdminOverview = () => {
   }, []);
 
   const stats = [
-    { label: 'Total Students', value: dashboardStats?.totalStudents || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Active Drives', value: dashboardStats?.activeDrives || 0, icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Pending Notices', value: dashboardStats?.pendingNotices || 0, icon: Bell, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Total Students', value: dashboardStats?.totalStudents ?? 0, icon: Users, color: 'text-brand-blue', bg: 'bg-brand-blue-light' },
+    { label: 'Active Drives', value: dashboardStats?.activeDrives ?? 0, icon: Briefcase, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Placed Students', value: dashboardStats?.placedStudents ?? 0, icon: GraduationCap, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Pending Applications', value: dashboardStats?.pendingApplications ?? 0, icon: Clock, color: 'text-brand-orange', bg: 'bg-brand-orange-light' },
   ];
 
   return (
@@ -48,7 +49,7 @@ const AdminOverview = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <div key={stat.label} className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
