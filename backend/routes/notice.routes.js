@@ -7,6 +7,11 @@ const {
   updateNotice,
 } = require('../controllers/notice.controller');
 const { verifyAccessToken, restrictToRoles } = require('../middleware/auth.middleware');
+const { validateRequest } = require('../middleware/validateRequest.middleware');
+const {
+  createNoticeValidation,
+  updateNoticeValidation,
+} = require('../validators/notice.validators');
 
 const router = express.Router();
 
@@ -17,13 +22,14 @@ router.use(verifyAccessToken);
 router
   .route('/')
   .get(getAllNotices)                              // All logged-in users (students read)
-  .post(restrictToRoles('admin', 'hr'), createNotice); // Admin / HR only
+  .post(restrictToRoles('admin', 'hr'), createNoticeValidation, validateRequest, createNotice); // Admin / HR only
 
 // Route: /api/notices/:id
 router
   .route('/:id')
   .get(getNoticeById)                              // All logged-in users
-  .put(restrictToRoles('admin', 'hr'), updateNotice)     // Admin / HR only
+  .put(restrictToRoles('admin', 'hr'), updateNoticeValidation, validateRequest, updateNotice)     // Admin / HR only
   .delete(restrictToRoles('admin', 'hr'), deleteNotice); // Admin / HR only
 
 module.exports = router;
+
