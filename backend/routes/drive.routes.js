@@ -22,14 +22,15 @@ router.use(verifyAccessToken);
 router
   .route('/')
   .get(getAllDrives) // Public/Students
-  .post(restrictToRoles('admin', 'hr'), createDriveValidation, validateRequest, createDrive); // Admin/HR only
+  .post(restrictToRoles('admin', 'hr'), ...createDriveValidation, validateRequest, createDrive); // Admin/HR only
 
 // Route: /api/drives/:id
 router
   .route('/:id')
   .get(getDriveById) // Public/Students
-  .patch(restrictToRoles('admin', 'hr'), updateDriveValidation, validateRequest, updateDrive) // Admin/HR only
+  .patch(restrictToRoles('admin', 'hr'), ...updateDriveValidation, validateRequest, updateDrive) // Admin/HR only
   .delete(restrictToRoles('admin', 'hr'), deleteDrive); // Admin/HR only
 
 module.exports = router;
 
+ 

@@ -107,7 +107,7 @@ driveSchema.virtual('isRegistrationOpen').get(function () {
 });
 
 // Auto-update status based on dates (optional logic to run on save or fetch)
-driveSchema.pre('save', function (next) {
+driveSchema.pre('save', function () {
   const now = new Date();
   if (this.status !== 'closed') {
     if (now > this.registrationDeadline) {
@@ -116,7 +116,6 @@ driveSchema.pre('save', function (next) {
       this.status = 'open'; // Assuming once created, it's open unless explicitly upcoming
     }
   }
-  next();
 });
 
 // Allow virtuals in JSON
