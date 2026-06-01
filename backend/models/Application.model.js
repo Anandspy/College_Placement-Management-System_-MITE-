@@ -18,6 +18,7 @@ const applicationSchema = new mongoose.Schema(
       type: String,
       enum: ['applied', 'shortlisted', 'not-shortlisted', 'test-cleared', 'test-failed', 'interview-scheduled', 'selected', 'rejected'],
       default: 'applied',
+      index: true,
     },
     appliedAt: {
       type: Date,

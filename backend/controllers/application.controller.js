@@ -85,3 +85,81 @@ exports.getStudentApplications = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Get all applications for a specific drive (Admin/HR only)
+ * GET /api/applications/drive/:driveId
+ */
+exports.getDriveApplications = async (req, res, next) => {
+  try {
+    const { driveId } = req.params;
+
+    // Fetch applications and populate user details
+    const applications = await Application.find({ driveId })
+      .populate('studentId', 'name email rollNumber department')
+      .sort({ appliedAt: -1 })
+      .lean();
+
+    if (!applications.length) {
+      return ApiResponse.success(res, 'No applications found for this drive', []);
+    }
+
+    // Extract user IDs to fetch their StudentProfiles
+    const userIds = applications.map(app => app.studentId?._id).filter(Boolean);
+
+    // Fetch student profiles for these users
+    const profiles = await StudentProfile.find({ userId: { $in: userIds } }).lean();
+
+    // Create a map of userId -> profile for quick lookup
+    const profileMap = {};
+    profiles.forEach(profile => {
+      profileMap[profile.userId.toString()] = profile;
+    });
+
+    // Merge profile data into applications
+    const enrichedApplications = applications.map(app => {
+      const studentIdStr = app.studentId?._id?.toString();
+      return {
+        ...app,
+        studentProfile: studentIdStr ? profileMap[studentIdStr] || null : null
+      };
+    });
+
+    return ApiResponse.success(res, 'Applications fetched successfully', enrichedApplications);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Update an application status (Admin/HR only)
+ * PATCH /api/applications/:applicationId/status
+ */
+exports.updateApplicationStatus = async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+    const { status, remarks } = req.body;
+
+    const validStatuses = ['applied', 'shortlisted', 'not-shortlisted', 'test-cleared', 'test-failed', 'interview-scheduled', 'selected', 'rejected'];
+    
+    if (!validStatuses.includes(status)) {
+      return ApiResponse.error(res, 'Invalid status', 400);
+    }
+
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      return ApiResponse.error(res, 'Application not found', 404);
+    }
+
+    application.status = status;
+    if (remarks !== undefined) {
+      application.remarks = remarks;
+    }
+
+    await application.save();
+
+    return ApiResponse.success(res, 'Application status updated successfully', application);
+  } catch (error) {
+    next(error);
+  }
+};

@@ -17,8 +17,10 @@ import {
   Building2,
   Edit2,
   Trash2,
-  ChevronLeft
+  ChevronLeft,
+  Users
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DriveModal from './components/DriveModal';
 import DriveDetailsModal from './components/DriveDetailsModal';
 import CompanyLogo from '../../../components/CompanyLogo';
@@ -27,6 +29,7 @@ const AdminDrivesPage = () => {
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   // Pagination State
   const [page, setPage] = useState(1);
@@ -384,6 +387,13 @@ const AdminDrivesPage = () => {
                       </td>
                       <td className="px-8 py-6 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={() => navigate(`/dashboard/admin/drives/${drive._id}/applications`)}
+                            className="p-2 text-brand-blue hover:bg-brand-blue-light rounded-xl transition-all"
+                            title="View Applicants"
+                          >
+                            <Users className="w-4.5 h-4.5" />
+                          </button>
                           <button
                             onClick={() => handleOpenModal('edit', drive)}
                             className="p-2 text-brand-orange hover:bg-brand-orange/10 rounded-xl transition-all"
