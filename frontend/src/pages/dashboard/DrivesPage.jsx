@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { getDrives, resetDriveState } from '../../features/drives/driveSlice';
 import { getMyApplicationsAction } from '../../features/applications/applicationSlice';
 import useEligibility from '../../hooks/useEligibility';
+import CompanyLogo from '../../components/CompanyLogo';
 
 const DriveCard = ({ drive, index, hasApplied }) => {
   const { isEligible, isProfileIncomplete } = useEligibility(drive);
@@ -67,13 +68,12 @@ const DriveCard = ({ drive, index, hasApplied }) => {
     >
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 group-hover:scale-110 transition-transform overflow-hidden shadow-inner">
-            {drive.companyLogo ? (
-              <img src={drive.companyLogo} alt={drive.companyName} className="w-full h-full object-cover" />
-            ) : (
-              <Building2 className="w-7 h-7 text-neutral-400" />
-            )}
-          </div>
+          <CompanyLogo 
+            logo={drive.companyLogo} 
+            companyName={drive.companyName} 
+            className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 group-hover:scale-110 transition-transform overflow-hidden shadow-inner"
+            iconClassName="w-7 h-7 text-neutral-400"
+          />
           <div>
             <h3 className="text-lg font-bold text-neutral-900 leading-tight group-hover:text-brand-orange transition-colors">
               {drive.companyName}

@@ -22,6 +22,7 @@ import { getDriveById, clearCurrentDrive } from '../../features/drives/driveSlic
 import { applyToDriveAction, getMyApplicationsAction, resetApplicationState } from '../../features/applications/applicationSlice';
 import useEligibility from '../../hooks/useEligibility';
 import toast from 'react-hot-toast';
+import CompanyLogo from '../../components/CompanyLogo';
 
 const DriveDetail = () => {
   const { id } = useParams();
@@ -119,13 +120,12 @@ const DriveDetail = () => {
             className="bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm"
           >
             <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
-              <div className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center border border-neutral-100 shadow-inner overflow-hidden shrink-0">
-                {currentDrive.companyLogo ? (
-                  <img src={currentDrive.companyLogo} alt={currentDrive.companyName} className="w-full h-full object-cover" />
-                ) : (
-                  <Building2 className="w-10 h-10 text-neutral-400" />
-                )}
-              </div>
+              <CompanyLogo 
+                logo={currentDrive.companyLogo} 
+                companyName={currentDrive.companyName} 
+                className="w-20 h-20 bg-neutral-50 rounded-3xl flex items-center justify-center border border-neutral-100 shadow-inner overflow-hidden shrink-0"
+                iconClassName="w-10 h-10 text-neutral-400"
+              />
               <div>
                 <h1 className="text-3xl font-extrabold text-neutral-900 mb-2">{currentDrive.companyName}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-neutral-500 font-medium">

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import DriveModal from './components/DriveModal';
 import DriveDetailsModal from './components/DriveDetailsModal';
+import CompanyLogo from '../../../components/CompanyLogo';
 
 const AdminDrivesPage = () => {
   const [drives, setDrives] = useState([]);
@@ -82,6 +83,7 @@ const AdminDrivesPage = () => {
       const response = await fetchDrives(params);
 
       if (response.success) {
+        console.log('[LoadDrives] Drives received:', response.data.drives.map(d => ({ name: d.companyName, logo: d.companyLogo })));
         setDrives(response.data.drives);
         setTotalPages(response.data.pages);
         setTotalCount(response.data.total);
@@ -150,11 +152,22 @@ const AdminDrivesPage = () => {
   const handleDriveSubmit = async (formData) => {
     try {
       setIsSubmitting(true);
+
+      // Clean up: remove empty companyLogo so it defaults to null in DB
+      const payload = { ...formData };
+      if (!payload.companyLogo || payload.companyLogo.trim() === '') {
+        delete payload.companyLogo;
+      }
+
+      console.log('[DriveSubmit] Payload being sent:', JSON.stringify(payload, null, 2));
+
       if (modalMode === 'create') {
-        await createDrive(formData);
+        const result = await createDrive(payload);
+        console.log('[DriveSubmit] Create response:', result);
         toast.success('Drive created successfully');
       } else {
-        await updateDrive(currentDrive._id, formData);
+        const result = await updateDrive(currentDrive._id, payload);
+        console.log('[DriveSubmit] Update response:', result);
         toast.success('Drive updated successfully');
       }
       handleCloseModal();
@@ -166,6 +179,7 @@ const AdminDrivesPage = () => {
       setIsSubmitting(false);
     }
   };
+
 
   const getStatusStyles = (status) => {
     switch (status) {
@@ -327,13 +341,13 @@ const AdminDrivesPage = () => {
                     >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200">
-                            {drive.companyLogo ? (
-                              <img src={drive.companyLogo} alt={drive.companyName} className="w-6 h-6 object-contain" />
-                            ) : (
-                              <Building2 className="w-5 h-5 text-neutral-400" />
-                            )}
-                          </div>
+                          <CompanyLogo 
+                            logo={drive.companyLogo} 
+                            companyName={drive.companyName} 
+                            className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center shrink-0 border border-neutral-200 overflow-hidden"
+                            iconClassName="w-5 h-5 text-neutral-400"
+                            imgClassName="w-6 h-6 object-contain"
+                          />
                           <div>
                             <span className="text-sm font-bold text-neutral-900 group-hover:text-brand-blue transition-colors block">
                               {drive.companyName}

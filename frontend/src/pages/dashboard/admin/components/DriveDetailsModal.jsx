@@ -4,6 +4,7 @@ import {
   X, Building2, MapPin, Briefcase, IndianRupee, Calendar, 
   GraduationCap, BookOpen, AlertCircle, Users, ExternalLink 
 } from 'lucide-react';
+import CompanyLogo from '../../../../components/CompanyLogo';
 
 const DriveDetailsModal = ({ isOpen, onClose, drive }) => {
   if (!isOpen || !drive) return null;
@@ -40,13 +41,13 @@ const DriveDetailsModal = ({ isOpen, onClose, drive }) => {
             {/* Header */}
             <div className="px-6 py-5 border-b border-neutral-100 flex justify-between items-center bg-neutral-50/80 sticky top-0 z-10 shrink-0">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 border border-neutral-200 shadow-sm">
-                  {drive.companyLogo ? (
-                    <img src={drive.companyLogo} alt={drive.companyName} className="w-8 h-8 object-contain" />
-                  ) : (
-                    <Building2 className="w-6 h-6 text-neutral-400" />
-                  )}
-                </div>
+                <CompanyLogo 
+                  logo={drive.companyLogo} 
+                  companyName={drive.companyName} 
+                  className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0 border border-neutral-200 shadow-sm overflow-hidden"
+                  iconClassName="w-6 h-6 text-neutral-400"
+                  imgClassName="w-8 h-8 object-contain"
+                />
                 <div>
                   <h2 className="text-xl font-bold text-neutral-900">{drive.companyName}</h2>
                   <div className="flex items-center gap-3 mt-1">

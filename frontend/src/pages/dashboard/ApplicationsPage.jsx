@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMyApplicationsAction } from '../../features/applications/applicationSlice';
+import CompanyLogo from '../../components/CompanyLogo';
 
 const StatusBadge = ({ status }) => {
   const configs = {
@@ -52,13 +53,12 @@ const ApplicationCard = ({ application, index }) => {
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 overflow-hidden shadow-inner shrink-0 group-hover:scale-105 transition-transform">
-            {drive.companyLogo ? (
-              <img src={drive.companyLogo} alt={drive.companyName} className="w-full h-full object-cover" />
-            ) : (
-              <Building2 className="w-8 h-8 text-neutral-300" />
-            )}
-          </div>
+          <CompanyLogo 
+            logo={drive.companyLogo} 
+            companyName={drive.companyName} 
+            className="w-16 h-16 bg-neutral-50 rounded-2xl flex items-center justify-center border border-neutral-100 shadow-inner shrink-0 group-hover:scale-105 transition-transform overflow-hidden"
+            iconClassName="w-8 h-8 text-neutral-300"
+          />
           <div>
             <h3 className="text-lg font-bold text-neutral-900 mb-1 group-hover:text-brand-orange transition-colors">
               {drive.jobRole}
