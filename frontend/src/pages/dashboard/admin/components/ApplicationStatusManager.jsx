@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { updateApplicationStatus } from '../../../../../api/applicationApi';
+import { updateApplicationStatus } from '../../../../api/applicationApi';
 import { Check, X, Clock, Edit2 } from 'lucide-react';
 
 const statuses = [
