@@ -276,9 +276,13 @@ const adminLogin = async (req, res, next) => {
     const admin = await Admin.findOne({ email: sanitizedEmail });
 
     // Timing-safe: always compare even if admin not found (use dummy string)
-    const dummyAdmin = { comparePassword: async () => false };
-    const target = admin || dummyAdmin;
-    const isMatch = await target.comparePassword(password);
+    let isMatch = false;
+    if (admin) {
+      isMatch = await admin.comparePassword(password);
+    } else {
+      const bcrypt = require('bcrypt');
+      await bcrypt.compare(password, '$2b$10$abcdefghijklmnopqrstuv');
+    }
 
     if (!admin || !isMatch) {
       return ApiResponse.error(res, 'Incorrect email or password', 401);
@@ -297,26 +301,16 @@ const adminLogin = async (req, res, next) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
     });
 
-    // Send OTP to admin email
-    try {
-      await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
-    } catch (emailError) {
+    // Send OTP to admin email in background to prevent slow login response
+    sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp).catch((emailError) => {
+      console.error('⚠️ Background email delivery failed:', emailError.message);
       if (process.env.NODE_ENV !== 'production') {
-        console.warn('⚠️ Failed to send admin OTP email in dev:', emailError.message);
-        console.log('--------------------------------------------');
         console.log('ADMIN OTP (DEV ONLY):', otp);
-        console.log('--------------------------------------------');
-      } else {
-        return ApiResponse.error(
-          res,
-          `Failed to send admin OTP: ${emailError.message}. Please configure SMTP settings.`,
-          500
-        );
       }
-    }
+    });
 
-    // In dev, if email succeeded, we still log OTP for convenience
-    if (process.env.NODE_ENV !== 'production' && !res.headersSent) {
+    // In dev, log OTP for convenience
+    if (process.env.NODE_ENV !== 'production') {
       console.log('--------------------------------------------');
       console.log('ADMIN OTP (DEV ONLY):', otp);
       console.log('--------------------------------------------');
