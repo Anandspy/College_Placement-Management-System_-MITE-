@@ -1,9 +1,43 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDriveApplications } from '../../../api/applicationApi';
-import { Download, Search, ArrowLeft, GraduationCap, Building2, ExternalLink } from 'lucide-react';
+import { Download, Search, ArrowLeft, GraduationCap, Building2, ExternalLink, Loader2 } from 'lucide-react';
 import ApplicationStatusManager from './components/ApplicationStatusManager';
 import { toast } from 'react-hot-toast';
+
+// Lazy load AnalyticsDashboard to prevent import errors from crashing the whole page
+const AnalyticsDashboard = React.lazy(() => import('./components/AnalyticsDashboard'));
+
+// Simple error boundary to catch rendering errors
+class AnalyticsErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('AnalyticsDashboard Error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <p className="text-red-600 font-semibold text-lg mb-2">Failed to load Analytics</p>
+          <p className="text-red-500 text-sm mb-4">{this.state.error?.message || 'An unexpected error occurred.'}</p>
+          <button 
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="px-4 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const exportToCSV = (applications, driveName) => {
   if (!applications || !applications.length) {
@@ -47,6 +81,7 @@ const DriveApplicationsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'appliedAt', direction: 'desc' });
+  const [activeTab, setActiveTab] = useState('applications'); // 'applications' | 'analytics'
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -136,17 +171,54 @@ const DriveApplicationsPage = () => {
               <Building2 className="w-4 h-4" /> Drive ID: {id} • <GraduationCap className="w-4 h-4 ml-2" /> {applications.length} Total Applicants
             </p>
           </div>
-          <button
-            onClick={() => exportToCSV(filteredAndSortedApps, `Drive_${id}`)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-neutral-900 text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-sm"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="bg-neutral-100 p-1 rounded-xl inline-flex">
+              <button
+                onClick={() => setActiveTab('applications')}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  activeTab === 'applications'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-700'
+                }`}
+              >
+                Applications
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+                  activeTab === 'analytics'
+                    ? 'bg-white text-neutral-900 shadow-sm'
+                    : 'text-neutral-500 hover:text-neutral-700'
+                }`}
+              >
+                Analytics
+              </button>
+            </div>
+            {activeTab === 'applications' && (
+              <button
+                onClick={() => exportToCSV(filteredAndSortedApps, `Drive_${id}`)}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-900 text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-sm"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-neutral-200 shadow-sm overflow-hidden flex flex-col">
+      {activeTab === 'analytics' ? (
+        <AnalyticsErrorBoundary>
+          <Suspense fallback={
+            <div className="flex justify-center items-center p-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          }>
+            <AnalyticsDashboard driveId={id} />
+          </Suspense>
+        </AnalyticsErrorBoundary>
+      ) : (
+        <div className="bg-white rounded-3xl border border-neutral-200 shadow-sm overflow-hidden flex flex-col">
         <div className="p-5 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/50">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
@@ -227,6 +299,7 @@ const DriveApplicationsPage = () => {
           </table>
         </div>
       </div>
+      )}
     </div>
   );
 };

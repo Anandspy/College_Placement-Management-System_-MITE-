@@ -111,3 +111,57 @@ exports.getStudentById = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Get detailed report for a specific drive
+ * @route   GET /api/admin/reports/drive/:driveId
+ * @access  Private (Admin)
+ */
+exports.getDriveReport = async (req, res, next) => {
+  try {
+    const { driveId } = req.params;
+
+    // Fetch the drive details
+    const drive = await Drive.findById(driveId).select('companyName jobTitle date status');
+    if (!drive) {
+      return res.status(404).json({ success: false, message: 'Drive not found' });
+    }
+
+    // Aggregate applications by status
+    const applicationStats = await Application.aggregate([
+      { $match: { driveId: drive._id } },
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+
+    // Format the stats into a more readable object
+    const statusCounts = {
+      applied: 0,
+      shortlisted: 0,
+      'not-shortlisted': 0,
+      'test-cleared': 0,
+      'test-failed': 0,
+      'interview-scheduled': 0,
+      selected: 0,
+      rejected: 0,
+    };
+
+    let totalApplications = 0;
+    applicationStats.forEach(stat => {
+      if (statusCounts[stat._id] !== undefined) {
+        statusCounts[stat._id] = stat.count;
+      }
+      totalApplications += stat.count;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        drive,
+        totalApplications,
+        statusCounts
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

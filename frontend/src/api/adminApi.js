@@ -15,4 +15,9 @@ export const adminApi = {
     const response = await axiosInstance.get(`/admin/students/${id}`);
     return response.data;
   },
+
+  getDriveReport: async (driveId) => {
+    const response = await axiosInstance.get(`/admin/reports/drive/${driveId}`);
+    return response.data;
+  },
 };

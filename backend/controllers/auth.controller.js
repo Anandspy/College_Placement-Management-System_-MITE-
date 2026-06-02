@@ -53,7 +53,25 @@ const register = async (req, res, next) => {
     });
 
     // Send OTP email
-    await sendOTPEmail(fullName, email, otp);
+    try {
+      await sendOTPEmail(fullName, email, otp);
+    } catch (emailError) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️ Failed to send OTP email in dev:', emailError.message);
+        console.log('--------------------------------------------');
+        console.log('STUDENT REGISTRATION OTP (DEV ONLY):', otp);
+        console.log('--------------------------------------------');
+      } else {
+        // Delete the newly created user and OTP so they can try again once SMTP is fixed
+        await User.deleteOne({ _id: user._id });
+        await OTP.deleteMany({ email });
+        return ApiResponse.error(
+          res,
+          `Failed to send verification email: ${emailError.message}. Please configure SMTP settings.`,
+          500
+        );
+      }
+    }
 
     return ApiResponse.success(
       res,
@@ -148,7 +166,22 @@ const resendOTP = async (req, res, next) => {
     });
 
     // Send OTP email
-    await sendOTPEmail(user.fullName, email, otp);
+    try {
+      await sendOTPEmail(user.fullName, email, otp);
+    } catch (emailError) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️ Failed to send OTP email in dev:', emailError.message);
+        console.log('--------------------------------------------');
+        console.log('STUDENT RESEND OTP (DEV ONLY):', otp);
+        console.log('--------------------------------------------');
+      } else {
+        return ApiResponse.error(
+          res,
+          `Failed to resend OTP: ${emailError.message}. Please configure SMTP settings.`,
+          500
+        );
+      }
+    }
 
     return ApiResponse.success(res, 'OTP has been resent to your email.');
   } catch (error) {
@@ -265,10 +298,25 @@ const adminLogin = async (req, res, next) => {
     });
 
     // Send OTP to admin email
-    await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
+    try {
+      await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
+    } catch (emailError) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️ Failed to send admin OTP email in dev:', emailError.message);
+        console.log('--------------------------------------------');
+        console.log('ADMIN OTP (DEV ONLY):', otp);
+        console.log('--------------------------------------------');
+      } else {
+        return ApiResponse.error(
+          res,
+          `Failed to send admin OTP: ${emailError.message}. Please configure SMTP settings.`,
+          500
+        );
+      }
+    }
 
-    // In dev, log OTP to console so you can test without email
-    if (process.env.NODE_ENV !== 'production') {
+    // In dev, if email succeeded, we still log OTP for convenience
+    if (process.env.NODE_ENV !== 'production' && !res.headersSent) {
       console.log('--------------------------------------------');
       console.log('ADMIN OTP (DEV ONLY):', otp);
       console.log('--------------------------------------------');
@@ -523,7 +571,19 @@ const forgotPassword = async (req, res, next) => {
     }
 
     // Send email
-    await sendResetEmail(user.fullName, sanitizedEmail, resetURL);
+    try {
+      await sendResetEmail(user.fullName, sanitizedEmail, resetURL);
+    } catch (emailError) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️ Failed to send reset email in dev:', emailError.message);
+      } else {
+        return ApiResponse.error(
+          res,
+          `Failed to send password reset email: ${emailError.message}. Please configure SMTP settings.`,
+          500
+        );
+      }
+    }
 
     return ApiResponse.success(res, genericMessage);
   } catch (error) {

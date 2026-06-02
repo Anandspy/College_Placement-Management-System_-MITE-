@@ -65,11 +65,9 @@ const sendOTPEmail = async (fullName, email, otp) => {
 
   try {
     await transporter.sendMail(mailOptions);
-
   } catch (error) {
     console.error('Failed to send OTP email:', error.message);
-    // Don't throw — allow registration to succeed even if email fails
-    // The user can resend OTP later
+    throw new Error(`Email delivery failed: ${error.message}`);
   }
 };
 
@@ -138,9 +136,9 @@ const sendResetEmail = async (fullName, email, resetURL) => {
 
   try {
     await transporter.sendMail(mailOptions);
-
   } catch (error) {
     console.error('Failed to send reset email:', error.message);
+    throw new Error(`Email delivery failed: ${error.message}`);
   }
 };
 
@@ -218,7 +216,7 @@ const sendAdminOTPEmail = async (fullName, email, otp) => {
     await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error('Failed to send admin OTP email:', error.message);
-    // Don't throw — caller handles this
+    throw new Error(`Email delivery failed: ${error.message}`);
   }
 };
 
