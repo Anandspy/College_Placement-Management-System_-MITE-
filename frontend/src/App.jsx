@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,9 +9,13 @@ import { refreshAccessToken } from './features/auth/authThunks';
 function App() {
   const dispatch = useDispatch();
   const { isInitialized } = useSelector((state) => state.auth);
+  const [slowLoad, setSlowLoad] = useState(false);
 
   useEffect(() => {
     dispatch(refreshAccessToken());
+    // If initialization takes longer than 5s, show a hint that the server is waking up
+    const timer = setTimeout(() => setSlowLoad(true), 5000);
+    return () => clearTimeout(timer);
   }, [dispatch]);
 
   if (!isInitialized) {
@@ -19,9 +23,13 @@ function App() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
         <p className="text-gray-600 font-medium animate-pulse">Initializing session...</p>
+        {slowLoad && (
+          <p className="text-gray-400 text-sm mt-2">Waking up server, please wait...</p>
+        )}
       </div>
     );
   }
+
 
   return (
     <BrowserRouter>

@@ -52,11 +52,35 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
+// Helper: wait for ms milliseconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Helper: attempt refresh with retries (handles Render.com cold starts)
+const attemptRefresh = async (retries = 2, delayMs = 4000) => {
+  try {
+    return await refreshApi();
+  } catch (error) {
+    const status = error.response?.status;
+
+    // Definitive auth failure — do not retry
+    if (status === 401 || status === 403) throw error;
+
+    // Network/server error — retry if we have attempts left
+    if (retries > 0) {
+      await sleep(delayMs);
+      return attemptRefresh(retries - 1, delayMs);
+    }
+
+    throw error;
+  }
+};
+
 export const refreshAccessToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      const { data } = await refreshApi();
+      // Retry up to 2 times (total 3 attempts) with 4s gap — covers Render cold start (~30s)
+      const { data } = await attemptRefresh(2, 4000);
       dispatch(
         setCredentials({
           user: data.data.user,
@@ -65,6 +89,7 @@ export const refreshAccessToken = createAsyncThunk(
       );
       return data;
     } catch (error) {
+      // Clear session only after all retries are exhausted
       dispatch(clearCredentials());
       dispatch(clearProfileState());
       dispatch(clearApplications());
