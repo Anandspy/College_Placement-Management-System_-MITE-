@@ -1,36 +1,36 @@
 const nodemailer = require('nodemailer');
 
 /**
- * Gmail SMTP transporter with explicit settings.
- * Uses port 587 + STARTTLS instead of port 465 (SSL) because many
- * cloud providers (Render, Railway, etc.) block or throttle port 465.
+ * Gmail SMTP transporter.
+ *
+ * NOTE: If the admin email is an institutional address (e.g. college domain),
+ * those mail servers often reject or spam-filter automated emails from cloud
+ * provider IPs (Render, Railway, etc.). In that case:
+ * - Change the admin email in the DB to a Gmail address, OR
+ * - Migrate to a transactional email service like Resend / SendGrid.
  */
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // use STARTTLS (upgrades to TLS after connect)
+  service: 'gmail', // uses port 465 SSL — proven to work on Render
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD,
   },
-  connectionTimeout: 10000, // 10s to establish connection
-  greetingTimeout: 10000,   // 10s for SMTP greeting
-  socketTimeout: 15000,     // 15s for socket inactivity
-  logger: process.env.NODE_ENV === 'production', // log SMTP traffic in prod for debugging
-  debug: process.env.NODE_ENV === 'production',  // verbose SMTP debug in prod
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 // Verify connection on startup (non-blocking)
 transporter.verify((error) => {
   if (error) {
     console.error('⚠️  Email transporter FAILED verification:');
-    console.error('   Error code:', error.code);
-    console.error('   Error message:', error.message);
+    console.error('   Code:', error.code, '| Message:', error.message);
     console.error('   GMAIL_USER set:', !!process.env.GMAIL_USER);
     console.error('   GMAIL_APP_PASSWORD set:', !!process.env.GMAIL_APP_PASSWORD);
-    console.error('   OTP and reset emails will NOT be sent until this is resolved.');
+    console.warn('   OTP and reset emails will NOT be sent until this is fixed.');
   } else {
-    console.log('✅ Email transporter ready (smtp.gmail.com:587 STARTTLS)');
+    console.log('✅ Email transporter ready — Gmail (service mode)');
+    console.log('   Sending as:', process.env.GMAIL_USER);
   }
 });
 
