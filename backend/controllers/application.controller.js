@@ -96,7 +96,7 @@ exports.getDriveApplications = async (req, res, next) => {
 
     // Fetch applications and populate user details
     const applications = await Application.find({ driveId })
-      .populate('studentId', 'name email rollNumber department')
+      .populate('studentId', 'fullName email usnNumber department')
       .sort({ appliedAt: -1 })
       .lean();
 
@@ -116,11 +116,22 @@ exports.getDriveApplications = async (req, res, next) => {
       profileMap[profile.userId.toString()] = profile;
     });
 
-    // Merge profile data into applications
+    // Merge profile data into applications and alias fields for frontend
     const enrichedApplications = applications.map(app => {
       const studentIdStr = app.studentId?._id?.toString();
+      
+      let mappedStudent = null;
+      if (app.studentId) {
+        mappedStudent = {
+          ...app.studentId,
+          name: app.studentId.fullName,
+          rollNumber: app.studentId.usnNumber
+        };
+      }
+
       return {
         ...app,
+        studentId: mappedStudent,
         studentProfile: studentIdStr ? profileMap[studentIdStr] || null : null
       };
     });
