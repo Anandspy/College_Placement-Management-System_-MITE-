@@ -301,15 +301,28 @@ const adminLogin = async (req, res, next) => {
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
     });
 
-    // Send OTP to admin email in background to prevent slow login response
-    sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp).catch((emailError) => {
-      console.error('⚠️ Background email delivery failed:', emailError.message);
+    // Send OTP to admin email
+    try {
+      await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
+    } catch (emailError) {
+      console.error('⚠️ Admin OTP email delivery failed:', emailError.message);
       if (process.env.NODE_ENV !== 'production') {
+        console.warn('Email send failed in dev — OTP logged below for convenience.');
+        console.log('--------------------------------------------');
         console.log('ADMIN OTP (DEV ONLY):', otp);
+        console.log('--------------------------------------------');
+      } else {
+        // Clean up the OTP so the admin can retry immediately
+        await OTP.deleteMany({ email: sanitizedEmail });
+        return ApiResponse.error(
+          res,
+          'Credentials verified but failed to deliver the OTP email. Please try again or contact support.',
+          500
+        );
       }
-    });
+    }
 
-    // In dev, log OTP for convenience
+    // In dev, also log OTP for convenience even if email succeeded
     if (process.env.NODE_ENV !== 'production') {
       console.log('--------------------------------------------');
       console.log('ADMIN OTP (DEV ONLY):', otp);
