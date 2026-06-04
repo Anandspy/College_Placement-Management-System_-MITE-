@@ -27,9 +27,12 @@ app.use(
   })
 );
 
-// Request logging (dev only)
+// Request logging
 if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
+} else {
+  // In production, log admin API requests
+  app.use('/api/admin', morgan('combined'));
 }
 
 // Body parsers

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -107,6 +108,16 @@ axiosInstance.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    } else if (error.response && error.response.status !== 401) {
+      // Show toast for generic API errors
+      const message = error.response.data?.message || 'An unexpected error occurred';
+      const isValidationError = error.response.status === 400 && error.response.data?.errors;
+      
+      if (error.response.status >= 500 || !isValidationError) {
+        toast.error(message);
+      }
+    } else if (!error.response && error.message !== 'canceled') {
+      toast.error('Network Error. Please check your connection.');
     }
 
     return Promise.reject(error);
