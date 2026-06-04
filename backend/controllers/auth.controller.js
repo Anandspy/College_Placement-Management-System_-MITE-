@@ -256,6 +256,7 @@ const login = async (req, res, next) => {
 
     return ApiResponse.success(res, 'Login successful', {
       accessToken,
+      refreshToken,
       user: payloadUser,
     });
   } catch (error) {
@@ -319,6 +320,7 @@ const adminLogin = async (req, res, next) => {
 
     return ApiResponse.success(res, 'Admin login successful', {
       accessToken,
+      refreshToken,
       user: payloadAdmin,
     });
   } catch (error) {
@@ -365,7 +367,8 @@ const logout = async (req, res, next) => {
  */
 const refreshTokenHandler = async (req, res, next) => {
   try {
-    const token = req.cookies?.refreshToken;
+    // Accept refresh token from request body (cross-domain) or cookie (same-domain fallback)
+    const token = req.body?.refreshToken || req.cookies?.refreshToken;
 
     if (!token) {
       return ApiResponse.error(res, 'Refresh token not found', 401);
@@ -400,8 +403,26 @@ const refreshTokenHandler = async (req, res, next) => {
       return ApiResponse.error(res, 'Refresh token mismatch', 401);
     }
 
-    // Issue new access token
+    // --- Token Rotation ---
+    // Issue new access token AND new refresh token (old one is invalidated)
     const newAccessToken = user.generateAccessToken();
+    const newRefreshToken = user.generateRefreshToken();
+
+    const newHashedRefreshToken = crypto
+      .createHash('sha256')
+      .update(newRefreshToken)
+      .digest('hex');
+
+    user.refreshToken = newHashedRefreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    // Set new refresh token in cookie (same-domain fallback)
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     let payloadUser = {
       _id: user._id,
@@ -421,6 +442,7 @@ const refreshTokenHandler = async (req, res, next) => {
 
     return ApiResponse.success(res, 'Token refreshed', {
       accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
       user: payloadUser,
     });
   } catch (error) {

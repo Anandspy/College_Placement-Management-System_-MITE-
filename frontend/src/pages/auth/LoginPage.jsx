@@ -69,6 +69,7 @@ const LoginPage = () => {
         setCredentials({
           user: res.data.data.user,
           accessToken: res.data.data.accessToken,
+          refreshToken: res.data.data.refreshToken,
         })
       );
 

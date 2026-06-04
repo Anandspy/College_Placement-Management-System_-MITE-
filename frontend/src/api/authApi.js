@@ -30,8 +30,8 @@ export const logoutUser = () =>
   axiosInstance.post('/auth/logout');
 
 // Refresh Token
-export const refreshToken = () =>
-  axiosInstance.post('/auth/refresh-token');
+export const refreshToken = (storedRefreshToken) =>
+  axiosInstance.post('/auth/refresh-token', { refreshToken: storedRefreshToken });
 
 // Forgot Password
 export const forgotPassword = (data) =>

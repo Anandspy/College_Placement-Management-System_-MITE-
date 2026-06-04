@@ -76,13 +76,19 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        const storedRefreshToken = localStorage.getItem('refreshToken');
         const { data } = await axios.post(
           `${API_BASE_URL}/auth/refresh-token`,
-          {},
+          { refreshToken: storedRefreshToken },
           { withCredentials: true }
         );
 
         const newToken = data.data.accessToken;
+
+        // Store rotated refresh token
+        if (data.data.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+        }
 
         // Update Redux store
         if (storeRef) {
@@ -101,6 +107,7 @@ axiosInstance.interceptors.response.use(
         if (storeRef) {
           storeRef.dispatch({ type: 'auth/clearCredentials' });
         }
+        localStorage.removeItem('refreshToken');
 
         // Redirect to login
         window.location.href = '/login';
