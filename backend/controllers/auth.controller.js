@@ -264,8 +264,8 @@ const login = async (req, res, next) => {
 };
 
 /**
- * POST /api/auth/admin-login  (Step 1)
- * Validates admin credentials and sends OTP — does NOT issue JWT yet.
+ * POST /api/auth/admin-login
+ * Validates admin credentials and logs in directly.
  */
 const adminLogin = async (req, res, next) => {
   try {
@@ -287,111 +287,6 @@ const adminLogin = async (req, res, next) => {
     if (!admin || !isMatch) {
       return ApiResponse.error(res, 'Incorrect email or password', 401);
     }
-
-    // --- Credentials valid: issue OTP challenge ---
-    const otp = generateOTP();
-
-    // Delete any previous OTP for this admin email
-    await OTP.deleteMany({ email: sanitizedEmail });
-
-    // Save hashed OTP (pre-save hook handles hashing)
-    await OTP.create({
-      email: sanitizedEmail,
-      otp,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-    });
-
-    // Send OTP to admin email
-    try {
-      await sendAdminOTPEmail(admin.fullName, sanitizedEmail, otp);
-    } catch (emailError) {
-      console.error('⚠️ Admin OTP email delivery failed:', emailError.message);
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('Email send failed in dev — OTP logged below for convenience.');
-        console.log('--------------------------------------------');
-        console.log('ADMIN OTP (DEV ONLY):', otp);
-        console.log('--------------------------------------------');
-      } else {
-        // Clean up the OTP so the admin can retry immediately
-        await OTP.deleteMany({ email: sanitizedEmail });
-        return ApiResponse.error(
-          res,
-          'Credentials verified but failed to deliver the OTP email. Please try again or contact support.',
-          500
-        );
-      }
-    }
-
-    // In dev, also log OTP for convenience even if email succeeded
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('--------------------------------------------');
-      console.log('ADMIN OTP (DEV ONLY):', otp);
-      console.log('--------------------------------------------');
-    }
-
-    return ApiResponse.success(
-      res,
-      'Credentials verified. An OTP has been sent to your registered email.',
-      {
-        otpSent: true,
-        email: sanitizedEmail,
-        mustChangePassword: admin.mustChangePassword,
-      },
-      200
-    );
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * POST /api/auth/admin-verify-otp  (Step 2)
- * Verifies the OTP and issues JWT + refresh token.
- */
-const adminVerifyOtp = async (req, res, next) => {
-  try {
-    const { email, otp } = req.body;
-    const sanitizedEmail = email.trim().toLowerCase();
-
-    // Find admin
-    const admin = await Admin.findOne({ email: sanitizedEmail });
-    if (!admin) {
-      return ApiResponse.error(res, 'Admin account not found', 404);
-    }
-
-    // Find OTP record
-    const otpRecord = await OTP.findOne({ email: sanitizedEmail });
-    if (!otpRecord) {
-      return ApiResponse.error(res, 'OTP not found or has expired. Please start over.', 400);
-    }
-
-    // Check max attempts
-    if (otpRecord.attempts >= 5) {
-      await OTP.deleteOne({ _id: otpRecord._id });
-      return ApiResponse.error(res, 'Too many wrong attempts. Please log in again.', 400);
-    }
-
-    // Check expiry
-    if (otpRecord.expiresAt < new Date()) {
-      await OTP.deleteOne({ _id: otpRecord._id });
-      return ApiResponse.error(res, 'OTP has expired. Please log in again.', 400);
-    }
-
-    // Compare OTP
-    const isMatch = await otpRecord.compareOTP(otp);
-    if (!isMatch) {
-      otpRecord.attempts += 1;
-      await otpRecord.save();
-      const remaining = 5 - otpRecord.attempts;
-      return ApiResponse.error(
-        res,
-        `Invalid OTP. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`,
-        400
-      );
-    }
-
-    // OTP is valid — delete it immediately
-    await OTP.deleteOne({ _id: otpRecord._id });
 
     // Generate tokens
     const accessToken = admin.generateAccessToken();
@@ -430,6 +325,8 @@ const adminVerifyOtp = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 /**
  * POST /api/auth/logout
@@ -763,7 +660,6 @@ module.exports = {
   updateVerifyEmail,
   login,
   adminLogin,
-  adminVerifyOtp,
   logout,
   refreshTokenHandler,
   forgotPassword,

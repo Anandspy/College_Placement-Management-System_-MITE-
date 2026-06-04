@@ -24,9 +24,6 @@ export const loginUser = (data) =>
 export const loginAdmin = (data) =>
   axiosInstance.post('/auth/admin-login', data);
 
-// Admin Verify OTP (Step 2 — verify OTP, receive JWT)
-export const adminVerifyOtp = (data) =>
-  axiosInstance.post('/auth/admin-verify-otp', data);
 
 // Logout
 export const logoutUser = () =>

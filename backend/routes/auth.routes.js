@@ -7,7 +7,6 @@ const {
   updateVerifyEmail,
   login,
   adminLogin,
-  adminVerifyOtp,
   logout,
   refreshTokenHandler,
   forgotPassword,
@@ -37,7 +36,6 @@ router.post('/resend-otp', sensitiveLimiter, resendOTPValidation, validateReques
 router.put('/update-verify-email', sensitiveLimiter, updateVerifyEmailValidation, validateRequest, updateVerifyEmail);
 router.post('/login', authLimiter, loginValidation, validateRequest, login);
 router.post('/admin-login', authLimiter, loginValidation, validateRequest, adminLogin);
-router.post('/admin-verify-otp', sensitiveLimiter, adminVerifyOtp);
 router.post('/refresh-token', refreshTokenHandler);
 router.post('/forgot-password', sensitiveLimiter, forgotPasswordValidation, validateRequest, forgotPassword);
 router.post('/validate-reset-token', validateResetTokenValidation, validateRequest, validateResetToken);
