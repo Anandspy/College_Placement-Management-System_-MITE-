@@ -12,7 +12,7 @@ const {
 const { verifyAccessToken } = require('../middleware/auth.middleware');
 const { validateRequest } = require('../middleware/validateRequest.middleware');
 const { requireRole } = require('../middleware/role.middleware');
-const upload = require('../middleware/upload.middleware');
+const { upload } = require('../middleware/upload.middleware');
 
 // All profile routes require authentication + student role
 router.use(verifyAccessToken);

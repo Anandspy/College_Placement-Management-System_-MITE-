@@ -121,9 +121,6 @@ VITE_COLLEGE_NAME="Mangalore Institute of Technology & Engineering"
 ---
 
 ## 🏗️ Upcoming Features
-- [ ] **Resume Builder**: Integrated tool for students to create standardized CVs.
-- [ ] **Cloudinary Integration**: Secure storage for profile pictures and resumes.
-- [ ] **Placement Drive Tracking**: Real-time calendar and notifications for upcoming drives.
 - [ ] **Analytics Dashboard**: Comprehensive charts for placement statistics.
 
 ---

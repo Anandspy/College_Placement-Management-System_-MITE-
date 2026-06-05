@@ -95,6 +95,8 @@ const DriveModal = ({ isOpen, onClose, mode = 'create', initialData = null, onSu
         ...prev,
         eligibility: { ...prev.eligibility, [field]: value }
       }));
+    } else if (name === 'companyLogo' && e.target.type === 'file') {
+      setFormData(prev => ({ ...prev, [name]: e.target.files[0] }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -236,15 +238,17 @@ const DriveModal = ({ isOpen, onClose, mode = 'create', initialData = null, onSu
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Company Logo URL</label>
+                    <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Company Logo Image</label>
                     <input
-                      type="url"
+                      type="file"
+                      accept="image/*"
                       name="companyLogo"
-                      value={formData.companyLogo}
                       onChange={handleChange}
-                      placeholder="https://example.com/logo.png"
                       className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all outline-none"
                     />
+                    {typeof formData.companyLogo === 'string' && formData.companyLogo && (
+                      <p className="text-xs text-neutral-500 mt-2">Current logo is uploaded. Selecting a new file will replace it.</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Company Description <span className="text-red-500">*</span></label>

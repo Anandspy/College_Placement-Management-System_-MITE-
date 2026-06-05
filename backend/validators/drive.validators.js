@@ -118,8 +118,7 @@ const driveFieldRules = [
     .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
 
   body('companyLogo')
-    .optional({ nullable: true, checkFalsy: true })
-    .isURL().withMessage('Company logo must be a valid URL'),
+    .optional({ nullable: true, checkFalsy: true }),
 ];
 
 /**
@@ -208,8 +207,7 @@ const createDriveValidation = [
     .withMessage(`Status must be one of: ${VALID_STATUSES.join(', ')}`),
 
   body('companyLogo')
-    .optional({ nullable: true, checkFalsy: true })
-    .isURL().withMessage('Company logo must be a valid URL'),
+    .optional({ nullable: true, checkFalsy: true }),
 ];
 
 /**

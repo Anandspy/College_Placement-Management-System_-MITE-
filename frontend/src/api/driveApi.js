@@ -23,7 +23,23 @@ export const fetchDriveById = async (id) => {
  * @param {Object} driveData 
  */
 export const createDrive = async (driveData) => {
-  const response = await api.post('/drives', driveData);
+  let payload = driveData;
+  let headers = {};
+
+  if (driveData.companyLogo instanceof File) {
+    const formData = new FormData();
+    Object.keys(driveData).forEach(key => {
+      if (key === 'eligibility') {
+        formData.append(key, JSON.stringify(driveData[key]));
+      } else {
+        formData.append(key, driveData[key]);
+      }
+    });
+    payload = formData;
+    headers = { 'Content-Type': 'multipart/form-data' };
+  }
+
+  const response = await api.post('/drives', payload, { headers });
   return response.data;
 };
 
@@ -33,7 +49,23 @@ export const createDrive = async (driveData) => {
  * @param {Object} driveData 
  */
 export const updateDrive = async (id, driveData) => {
-  const response = await api.patch(`/drives/${id}`, driveData);
+  let payload = driveData;
+  let headers = {};
+
+  if (driveData.companyLogo instanceof File) {
+    const formData = new FormData();
+    Object.keys(driveData).forEach(key => {
+      if (key === 'eligibility') {
+        formData.append(key, JSON.stringify(driveData[key]));
+      } else {
+        formData.append(key, driveData[key]);
+      }
+    });
+    payload = formData;
+    headers = { 'Content-Type': 'multipart/form-data' };
+  }
+
+  const response = await api.patch(`/drives/${id}`, payload, { headers });
   return response.data;
 };
 

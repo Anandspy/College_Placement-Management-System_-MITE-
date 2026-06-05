@@ -24,7 +24,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// 2MB size limit
+// 2MB size limit for PDFs
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
@@ -33,4 +33,35 @@ const upload = multer({
   },
 });
 
-module.exports = upload;
+const imageStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\.(png|jpg|jpeg)$/i, '');
+    return {
+      folder: 'cpms/logos',
+      allowedFormats: ['jpg', 'png', 'jpeg'],
+      public_id: `${Date.now()}-${sanitizedName}`
+    };
+  },
+});
+
+const imageFileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const uploadImage = multer({
+  storage: imageStorage,
+  fileFilter: imageFileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB limit
+  },
+});
+
+module.exports = {
+  upload,
+  uploadImage
+};

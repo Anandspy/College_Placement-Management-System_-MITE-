@@ -1,5 +1,6 @@
 const Drive = require('../models/Drive.model');
 const ApiResponse = require('../utils/ApiResponse');
+const cloudinary = require('../config/cloudinary');
 
 /**
  * @desc    Create a new drive
@@ -12,6 +13,10 @@ exports.createDrive = async (req, res, next) => {
       ...req.body,
       createdBy: req.user.id,
     };
+
+    if (req.file && req.file.path) {
+      driveData.companyLogo = req.file.path;
+    }
 
     const drive = await Drive.create(driveData);
 
@@ -97,9 +102,42 @@ exports.getDriveById = async (req, res, next) => {
  */
 exports.updateDrive = async (req, res, next) => {
   try {
+    const existingDrive = await Drive.findById(req.params.id);
+    if (!existingDrive) {
+      return ApiResponse.error(res, 'Drive not found', 404);
+    }
+
+    const updateData = { ...req.body };
+
+    if (req.file && req.file.path) {
+      updateData.companyLogo = req.file.path;
+
+      // Delete old logo if it exists
+      if (existingDrive.companyLogo && existingDrive.companyLogo.includes('res.cloudinary.com')) {
+        try {
+          const parts = existingDrive.companyLogo.split('/');
+          const uploadIndex = parts.indexOf('upload');
+          if (uploadIndex !== -1) {
+            // Check if there's a version number like v12345678
+            let pathParts = parts.slice(uploadIndex + 1);
+            if (pathParts[0].startsWith('v') && !isNaN(pathParts[0].substring(1))) {
+               pathParts = pathParts.slice(1);
+            }
+            const publicIdWithExt = pathParts.join('/');
+            const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
+            if (publicId) {
+               await cloudinary.uploader.destroy(publicId);
+            }
+          }
+        } catch (err) {
+          console.error('Error deleting old logo from Cloudinary:', err);
+        }
+      }
+    }
+
     const drive = await Drive.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 

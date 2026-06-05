@@ -12,8 +12,18 @@ const {
   createDriveValidation,
   updateDriveValidation,
 } = require('../validators/drive.validators');
+const { uploadImage } = require('../middleware/upload.middleware');
 
 const router = express.Router();
+
+const parseEligibility = (req, res, next) => {
+  if (req.body && req.body.eligibility && typeof req.body.eligibility === 'string') {
+    try {
+      req.body.eligibility = JSON.parse(req.body.eligibility);
+    } catch(e) {}
+  }
+  next();
+};
 
 // Apply verifyAccessToken to all routes
 router.use(verifyAccessToken);
@@ -22,13 +32,13 @@ router.use(verifyAccessToken);
 router
   .route('/')
   .get(getAllDrives) // Public/Students
-  .post(restrictToRoles('admin', 'hr'), ...createDriveValidation, validateRequest, createDrive); // Admin/HR only
+  .post(restrictToRoles('admin', 'hr'), uploadImage.single('companyLogo'), parseEligibility, ...createDriveValidation, validateRequest, createDrive); // Admin/HR only
 
 // Route: /api/drives/:id
 router
   .route('/:id')
   .get(getDriveById) // Public/Students
-  .patch(restrictToRoles('admin', 'hr'), ...updateDriveValidation, validateRequest, updateDrive) // Admin/HR only
+  .patch(restrictToRoles('admin', 'hr'), uploadImage.single('companyLogo'), parseEligibility, ...updateDriveValidation, validateRequest, updateDrive) // Admin/HR only
   .delete(restrictToRoles('admin', 'hr'), deleteDrive); // Admin/HR only
 
 module.exports = router;
