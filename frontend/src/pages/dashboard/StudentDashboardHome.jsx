@@ -421,86 +421,123 @@ const StudentDashboardHome = () => {
       </div>
 
       {/* ── 4. NEXT STEPS CHECKLIST ────────────────────────────── */}
-      <motion.div variants={fadeUp} className="bg-white rounded-2xl border border-neutral-200/80 p-6 sm:p-8">
-        <h2 className="text-lg font-bold text-neutral-900 mb-5 flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-brand-blue" />
-          Your Next Steps
-        </h2>
-        <div className="space-y-3">
-          {/* Step 1: Profile */}
-          <div className={`flex gap-4 items-start p-4 rounded-xl border transition-all ${
-            profileCompletion === 100 ? 'bg-emerald-50/50 border-emerald-200/60' : 'bg-brand-blue-light/40 border-brand-blue/10'
-          }`}>
-            <div className="mt-0.5 flex-shrink-0">
-              {profileCompletion === 100 ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <AlertCircle className="h-5 w-5 text-brand-blue" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-neutral-900">
-                Complete Student Profile {profileCompletion === 100 && '✓'}
-              </h4>
-              <p className="text-xs text-neutral-500 mt-0.5">Add your academic details, 10th & 12th marks, and projects to get verified.</p>
-            </div>
-            {profileCompletion !== 100 && (
-              <button 
-                onClick={() => navigate('/dashboard/student/profile')}
-                className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-blue text-white text-xs font-semibold rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
-              >
-                Start <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+      <AnimatePresence>
+        {(profileCompletion !== 100 || !profile?.resumeUrl || jobsApplied === 0) && (
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, height: 0, marginTop: 0, paddingTop: 0, paddingBottom: 0, overflow: 'hidden' }}
+            transition={{ duration: 0.35, ease: 'easeInOut' }}
+            className="bg-white rounded-2xl border border-neutral-200/80 p-6 sm:p-8"
+          >
+            <h2 className="text-lg font-bold text-neutral-900 mb-5 flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-brand-blue" />
+              Your Next Steps
+            </h2>
+            <div className="space-y-3">
 
-          {/* Step 2: Resume */}
-          <div className={`flex gap-4 items-start p-4 rounded-xl border transition-all ${
-            profileCompletion === 100 
-              ? (profile?.resumeUrl ? 'bg-emerald-50/50 border-emerald-200/60' : 'bg-brand-orange/5 border-brand-orange/10') 
-              : 'border-neutral-100 bg-neutral-50/50 opacity-60'
-          }`}>
-            <div className="mt-0.5 flex-shrink-0">
-              {profile?.resumeUrl ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <FileText className={`h-5 w-5 ${profileCompletion === 100 ? 'text-brand-orange' : 'text-neutral-400'}`} />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className={`text-sm font-bold ${profileCompletion === 100 ? 'text-neutral-900' : 'text-neutral-800'}`}>
-                Upload Placement Resume {profile?.resumeUrl && '✓'}
-              </h4>
-              <p className="text-xs text-neutral-500 mt-0.5">Upload your PDF resume to start applying for drives.</p>
-            </div>
-            {profileCompletion === 100 ? (
-              !profile?.resumeUrl && (
-                <button 
-                  onClick={() => navigate('/dashboard/student/profile')}
-                  className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-orange text-white text-xs font-semibold rounded-lg hover:bg-brand-orange-dark transition-colors shadow-sm"
-                >
-                  Upload <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              )
-            ) : (
-              <span className="hidden sm:inline-block px-3 py-1 bg-neutral-200 text-neutral-500 text-[10px] font-semibold rounded-full">Locked</span>
-            )}
-          </div>
+              {/* Step 1: Profile — hidden once 100% complete */}
+              <AnimatePresence>
+                {profileCompletion !== 100 && (
+                  <motion.div
+                    key="step-profile"
+                    initial={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className="flex gap-4 items-start p-4 rounded-xl border bg-brand-blue-light/40 border-brand-blue/10 transition-all"
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      <AlertCircle className="h-5 w-5 text-brand-blue" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-neutral-900">Complete Student Profile</h4>
+                      <p className="text-xs text-neutral-500 mt-0.5">Add your academic details, 10th &amp; 12th marks, and projects to get verified.</p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/dashboard/student/profile')}
+                      className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-blue text-white text-xs font-semibold rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
+                    >
+                      Start <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          {/* Step 3: Applications */}
-          <div className={`flex gap-4 items-start p-4 rounded-xl border transition-all ${
-            profile?.resumeUrl ? 'bg-brand-blue-light/40 border-brand-blue/10' : 'border-neutral-100 bg-neutral-50/50 opacity-60'
-          }`}>
-            <div className="mt-0.5 flex-shrink-0"><Briefcase className={`h-5 w-5 ${profile?.resumeUrl ? 'text-brand-blue' : 'text-neutral-400'}`} /></div>
-            <div className="flex-1 min-w-0">
-              <h4 className={`text-sm font-bold ${profile?.resumeUrl ? 'text-neutral-900' : 'text-neutral-800'}`}>Apply to Placement Drives</h4>
-              <p className="text-xs text-neutral-500 mt-0.5">Browse eligible drives and apply with a single click once resume is uploaded.</p>
+              {/* Step 2: Resume — hidden once uploaded */}
+              <AnimatePresence>
+                {!profile?.resumeUrl && (
+                  <motion.div
+                    key="step-resume"
+                    initial={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className={`flex gap-4 items-start p-4 rounded-xl border transition-all ${
+                      profileCompletion === 100
+                        ? 'bg-brand-orange/5 border-brand-orange/10'
+                        : 'border-neutral-100 bg-neutral-50/50 opacity-60'
+                    }`}
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      <FileText className={`h-5 w-5 ${profileCompletion === 100 ? 'text-brand-orange' : 'text-neutral-400'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm font-bold ${profileCompletion === 100 ? 'text-neutral-900' : 'text-neutral-800'}`}>
+                        Upload Placement Resume
+                      </h4>
+                      <p className="text-xs text-neutral-500 mt-0.5">Upload your PDF resume to start applying for drives.</p>
+                    </div>
+                    {profileCompletion === 100 ? (
+                      <button
+                        onClick={() => navigate('/dashboard/student/profile')}
+                        className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-orange text-white text-xs font-semibold rounded-lg hover:bg-brand-orange-dark transition-colors shadow-sm"
+                      >
+                        Upload <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <span className="hidden sm:inline-block px-3 py-1 bg-neutral-200 text-neutral-500 text-[10px] font-semibold rounded-full">Locked</span>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Step 3: Apply — hidden once at least one application submitted */}
+              <AnimatePresence>
+                {jobsApplied === 0 && (
+                  <motion.div
+                    key="step-apply"
+                    initial={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden' }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    className={`flex gap-4 items-start p-4 rounded-xl border transition-all ${
+                      profile?.resumeUrl ? 'bg-brand-blue-light/40 border-brand-blue/10' : 'border-neutral-100 bg-neutral-50/50 opacity-60'
+                    }`}
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      <Briefcase className={`h-5 w-5 ${profile?.resumeUrl ? 'text-brand-blue' : 'text-neutral-400'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`text-sm font-bold ${profile?.resumeUrl ? 'text-neutral-900' : 'text-neutral-800'}`}>Apply to Placement Drives</h4>
+                      <p className="text-xs text-neutral-500 mt-0.5">Browse eligible drives and apply with a single click once resume is uploaded.</p>
+                    </div>
+                    {profile?.resumeUrl ? (
+                      <button
+                        onClick={() => navigate('/dashboard/student/drives')}
+                        className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-blue text-white text-xs font-semibold rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
+                      >
+                        Browse <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <span className="hidden sm:inline-block px-3 py-1 bg-neutral-200 text-neutral-500 text-[10px] font-semibold rounded-full">Locked</span>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
             </div>
-            {profile?.resumeUrl ? (
-              <button 
-                onClick={() => navigate('/dashboard/student/drives')}
-                className="hidden sm:flex items-center gap-1 px-4 py-2 bg-brand-blue text-white text-xs font-semibold rounded-lg hover:bg-brand-blue-dark transition-colors shadow-sm"
-              >
-                Browse <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            ) : (
-              <span className="hidden sm:inline-block px-3 py-1 bg-neutral-200 text-neutral-500 text-[10px] font-semibold rounded-full">Locked</span>
-            )}
-          </div>
-        </div>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
