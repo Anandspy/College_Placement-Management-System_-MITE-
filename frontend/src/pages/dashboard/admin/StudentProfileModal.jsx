@@ -98,6 +98,34 @@ const StudentProfileModal = ({ studentId, onClose }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadResume = async () => {
+    const url = data?.profile?.resumeUrl;
+    const usn = data?.user?.usnNumber || 'UNKNOWN';
+    const firstName = (data?.user?.fullName || 'Student').split(' ')[0];
+    const filename = `${usn}-${firstName}.pdf`;
+
+    try {
+      setDownloading(true);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch resume');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      // Fallback: open in new tab if fetch fails (e.g. strict CORS)
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -428,13 +456,15 @@ const StudentProfileModal = ({ studentId, onClose }) => {
                   >
                     <ExternalLink className="w-4 h-4" /> View
                   </a>
-                  <a
-                    href={profile.resumeUrl}
-                    download
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  <button
+                    onClick={handleDownloadResume}
+                    disabled={downloading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    title={`Download as ${user?.usnNumber}-${(user?.fullName || '').split(' ')[0]}.pdf`}
                   >
-                    <Download className="w-4 h-4" /> Download
-                  </a>
+                    <Download className="w-4 h-4" />
+                    {downloading ? 'Downloading…' : 'Download'}
+                  </button>
                 </>
               )}
               <button

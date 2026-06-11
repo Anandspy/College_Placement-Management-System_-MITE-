@@ -39,6 +39,27 @@ class AnalyticsErrorBoundary extends React.Component {
   }
 }
 
+const downloadResumeAs = async (url, usn, fullName) => {
+  const firstName = (fullName || 'Student').split(' ')[0];
+  const filename = `${usn || 'UNKNOWN'}-${firstName}.pdf`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Fetch failed');
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    // Fallback: open in new tab if strict CORS blocks blob fetch
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
+
 const exportToCSV = (applications, driveName) => {
   if (!applications || !applications.length) {
     toast.error('No applications to export');
@@ -276,15 +297,30 @@ const DriveApplicationsPage = () => {
                     </td>
                     <td className="px-6 py-4">
                       {(app.resumeSnapshot || app.studentProfile?.resumeUrl) ? (
-                        <a 
-                          href={app.resumeSnapshot || app.studentProfile?.resumeUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-100 text-neutral-600 hover:bg-brand-blue hover:text-white transition-colors"
-                          title="View Resume"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        <div className="flex items-center gap-1.5">
+                          <a 
+                            href={app.resumeSnapshot || app.studentProfile?.resumeUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-100 text-neutral-600 hover:bg-brand-blue hover:text-white transition-colors"
+                            title="View Resume"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={() =>
+                              downloadResumeAs(
+                                app.resumeSnapshot || app.studentProfile?.resumeUrl,
+                                app.studentId?.rollNumber,
+                                app.studentId?.name
+                              )
+                            }
+                            className="inline-flex items-center justify-center p-2 rounded-lg bg-neutral-100 text-neutral-600 hover:bg-indigo-600 hover:text-white transition-colors"
+                            title={`Download as ${app.studentId?.rollNumber}-${(app.studentId?.name || '').split(' ')[0]}.pdf`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-neutral-400 text-xs">None</span>
                       )}

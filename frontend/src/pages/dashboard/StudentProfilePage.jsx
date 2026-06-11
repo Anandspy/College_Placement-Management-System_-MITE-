@@ -230,6 +230,29 @@ const StudentProfilePage = () => {
     }
   };
 
+  const handleDownloadOwnResume = async () => {
+    const url = profile?.resumeUrl;
+    if (!url) return;
+    const usn = user?.usnNumber || 'UNKNOWN';
+    const firstName = (user?.fullName || 'Student').split(' ')[0];
+    const filename = `${usn}-${firstName}.pdf`;
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Fetch failed');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   if (loading && !profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -677,16 +700,14 @@ const StudentProfilePage = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <a
-                      href={profile.resumeUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download
+                    <button
+                      onClick={handleDownloadOwnResume}
                       className="flex items-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-brand-blue text-xs font-bold rounded-xl hover:bg-brand-blue/5 transition-all shadow-sm"
+                      title={`Download as ${user?.usnNumber}-${(user?.fullName || '').split(' ')[0]}.pdf`}
                     >
                       Download Resume
                       <Download className="h-3.5 w-3.5" />
-                    </a>
+                    </button>
                     <button
                       onClick={handleResumeDelete}
                       disabled={saving}
