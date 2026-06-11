@@ -226,13 +226,13 @@ const DriveDetail = () => {
           </motion.div>
         </div>
 
-        {/* Right Column: Sticky Sidebar */}
-        <div className="space-y-8">
+        {/* Right Column: Sticky Sidebar - both cards in one sticky wrapper */}
+        <div className="sticky top-8 space-y-6 self-start">
           {/* Eligibility Card */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm sticky top-8"
+            className="bg-white rounded-3xl border border-neutral-100 p-8 shadow-sm"
           >
             <h2 className="text-xl font-bold text-neutral-900 mb-6 flex items-center">
               <GraduationCap className="w-5 h-5 mr-3 text-brand-orange" />
