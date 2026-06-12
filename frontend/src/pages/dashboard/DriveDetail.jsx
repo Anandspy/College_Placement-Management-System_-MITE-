@@ -52,7 +52,6 @@ const DriveDetail = () => {
       dispatch(resetApplicationState());
     }
     if (applicationError) {
-      toast.error(applicationMessage);
       dispatch(resetApplicationState());
     }
   }, [applicationSuccess, applicationError, applicationMessage, dispatch]);
@@ -94,6 +93,8 @@ const DriveDetail = () => {
   // Derive which application (if any) this student has for this drive
   const currentApplication = applications.find(app => app.driveId?._id === id || app.driveId === id);
   const appStatus = currentApplication?.status;
+
+  const isDeadlinePassed = new Date() > new Date(currentDrive.registrationDeadline);
 
   /**
    * Map application status → which recruitment step is "current".
@@ -328,9 +329,9 @@ const DriveDetail = () => {
 
             <button 
               onClick={handleApply}
-              disabled={currentDrive.status === 'closed' || !isEligible || isProfileIncomplete || hasApplied || isApplying}
+              disabled={currentDrive.status === 'closed' || isDeadlinePassed || !isEligible || isProfileIncomplete || hasApplied || isApplying}
               className={`w-full py-4 rounded-2xl font-extrabold text-lg shadow-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-                currentDrive.status === 'closed' || !isEligible || isProfileIncomplete || hasApplied || isApplying
+                currentDrive.status === 'closed' || isDeadlinePassed || !isEligible || isProfileIncomplete || hasApplied || isApplying
                 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                 : 'bg-neutral-900 text-white hover:bg-brand-orange hover:shadow-brand-orange/30'
               }`}
@@ -338,12 +339,13 @@ const DriveDetail = () => {
               {isApplying ? 'Processing...' : 
                hasApplied ? 'Already Applied' : 
                currentDrive.status === 'closed' ? 'Application Closed' : 
+               isDeadlinePassed ? 'Deadline Passed' : 
                !isEligible ? 'Not Eligible' : 
                isProfileIncomplete ? 'Complete Profile' : 'Apply Now'}
-              {currentDrive.status === 'open' && isEligible && !isProfileIncomplete && !hasApplied && !isApplying && <ExternalLink className="w-5 h-5" />}
+              {currentDrive.status === 'open' && !isDeadlinePassed && isEligible && !isProfileIncomplete && !hasApplied && !isApplying && <ExternalLink className="w-5 h-5" />}
             </button>
-            <p className={`text-center text-[11px] font-bold mt-4 uppercase tracking-widest ${!isEligible ? 'text-rose-500' : 'text-neutral-400'}`}>
-              {!isEligible ? reason : 'Review eligibility before applying'}
+            <p className={`text-center text-[11px] font-bold mt-4 uppercase tracking-widest ${isDeadlinePassed || !isEligible ? 'text-rose-500' : 'text-neutral-400'}`}>
+              {isDeadlinePassed ? 'Registration deadline has passed' : !isEligible ? reason : 'Review eligibility before applying'}
             </p>
           </motion.div>
 

@@ -75,7 +75,6 @@ const RegisterPage = () => {
     } catch (error) {
       const msg = error.response?.data?.message || 'Registration failed. Please try again.';
       setServerError(msg);
-      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
