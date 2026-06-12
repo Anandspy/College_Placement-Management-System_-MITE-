@@ -91,13 +91,53 @@ const DriveDetail = () => {
     );
   }
 
+  // Derive which application (if any) this student has for this drive
+  const currentApplication = applications.find(app => app.driveId?._id === id || app.driveId === id);
+  const appStatus = currentApplication?.status;
+
+  /**
+   * Map application status → which recruitment step is "current".
+   * Steps in order: Registration → Shortlisting → Online Test → Technical Interview → HR Interview
+   *
+   * step index: 0=Registration, 1=Shortlisting, 2=OnlineTest, 3=TechInterview, 4=HRInterview
+   */
+  const getStepState = (stepIndex) => {
+    if (!appStatus) {
+      // Not applied yet — everything upcoming, Registration is current
+      return stepIndex === 0 ? 'current' : 'upcoming';
+    }
+
+    const statusToCurrentStep = {
+      'applied':              0, // registration done, shortlisting current
+      'shortlisted':          1,
+      'not-shortlisted':      1, // stuck at shortlisting (failed)
+      'test-cleared':         2,
+      'test-failed':          2, // stuck at online test (failed)
+      'interview-scheduled':  3,
+      'selected':             4,
+      'rejected':             4,
+    };
+
+    const currentStepIndex = statusToCurrentStep[appStatus] ?? 0;
+    const isFinalNegative = ['not-shortlisted', 'test-failed', 'rejected'].includes(appStatus);
+
+    if (stepIndex < currentStepIndex) return 'completed';
+    if (stepIndex === currentStepIndex) {
+      // For terminal-failure statuses the current step shows as failed (we still use 'current' class
+      // but the label will indicate it in the UI via the application status badge)
+      return isFinalNegative && stepIndex === currentStepIndex ? 'failed' : 'current';
+    }
+    return 'upcoming';
+  };
+
   const driveSteps = [
-    { name: 'Registration', status: 'completed', date: currentDrive.registrationDeadline },
-    { name: 'Shortlisting', status: 'current', date: null },
-    { name: 'Online Test', status: 'upcoming', date: currentDrive.driveDate },
-    { name: 'Technical Interview', status: 'upcoming', date: null },
-    { name: 'HR Interview', status: 'upcoming', date: null },
+    { name: 'Registration',        date: currentDrive.registrationDeadline, state: getStepState(0) },
+    { name: 'Shortlisting',        date: null,                              state: getStepState(1) },
+    { name: 'Online Test',         date: currentDrive.driveDate,            state: getStepState(2) },
+    { name: 'Technical Interview', date: null,                              state: getStepState(3) },
+    { name: 'HR Interview',        date: null,                              state: getStepState(4) },
   ];
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -203,14 +243,25 @@ const DriveDetail = () => {
                 {driveSteps.map((step, index) => (
                   <div key={index} className="flex items-start gap-6 group">
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 transition-colors ${
-                      step.status === 'completed' ? 'bg-emerald-500 text-white' : 
-                      step.status === 'current' ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/30' : 
+                      step.state === 'completed' ? 'bg-emerald-500 text-white' :
+                      step.state === 'current'   ? 'bg-brand-orange text-white shadow-lg shadow-brand-orange/30' :
+                      step.state === 'failed'    ? 'bg-rose-500 text-white' :
                       'bg-neutral-100 text-neutral-400'
                     }`}>
-                      {step.status === 'completed' ? <CheckCircle2 className="w-4 h-4" /> : <div className="w-2 h-2 rounded-full bg-current"></div>}
+                      {step.state === 'completed' ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                      ) : step.state === 'failed' ? (
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-current" />
+                      )}
                     </div>
                     <div>
-                      <h3 className={`font-bold transition-colors ${step.status === 'upcoming' ? 'text-neutral-400' : 'text-neutral-900'}`}>
+                      <h3 className={`font-bold transition-colors ${
+                        step.state === 'upcoming' ? 'text-neutral-400' :
+                        step.state === 'failed'   ? 'text-rose-500 line-through' :
+                        'text-neutral-900'
+                      }`}>
                         {step.name}
                       </h3>
                       {step.date && (
@@ -222,6 +273,7 @@ const DriveDetail = () => {
                   </div>
                 ))}
               </div>
+
             </div>
           </motion.div>
         </div>

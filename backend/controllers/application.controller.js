@@ -1,7 +1,9 @@
 const Application = require('../models/Application.model');
 const Drive = require('../models/Drive.model');
 const StudentProfile = require('../models/StudentProfile.model');
+const User = require('../models/User.model');
 const ApiResponse = require('../utils/ApiResponse');
+const { sendStatusUpdateEmail } = require('../services/email.service');
 
 /**
  * Apply to a placement drive
@@ -46,6 +48,22 @@ exports.applyToDrive = async (req, res, next) => {
 
     if (profile.backlogs > drive.eligibility.maxBacklogs) {
       return ApiResponse.error(res, 'You exceed the maximum backlog limit.', 400);
+    }
+
+    // 10th percent check
+    if (
+      drive.eligibility.minTenthPercent > 0 &&
+      (profile.tenthPercent == null || profile.tenthPercent < drive.eligibility.minTenthPercent)
+    ) {
+      return ApiResponse.error(res, `You do not meet the minimum 10th percentage requirement (${drive.eligibility.minTenthPercent}%).`, 400);
+    }
+
+    // 12th percent check
+    if (
+      drive.eligibility.minTwelfthPercent > 0 &&
+      (profile.twelfthPercent == null || profile.twelfthPercent < drive.eligibility.minTwelfthPercent)
+    ) {
+      return ApiResponse.error(res, `You do not meet the minimum 12th percentage requirement (${drive.eligibility.minTwelfthPercent}%).`, 400);
     }
 
     // Branch check
@@ -168,6 +186,38 @@ exports.updateApplicationStatus = async (req, res, next) => {
     }
 
     await application.save();
+
+    // ── Send notification email to the student ───────────────────────────
+    // Statuses that warrant an email (skip trivial 'applied' re-notifications)
+    const notifiableStatuses = [
+      'shortlisted', 'not-shortlisted',
+      'test-cleared', 'test-failed',
+      'interview-scheduled', 'selected', 'rejected'
+    ];
+
+    if (notifiableStatuses.includes(status)) {
+      try {
+        // Fetch student user record for name + email
+        const studentUser = await User.findById(application.studentId).select('fullName email');
+        // Fetch drive for company name + job role
+        const drive = await Drive.findById(application.driveId).select('companyName jobRole');
+
+        if (studentUser && drive) {
+          await sendStatusUpdateEmail(
+            studentUser.fullName,
+            studentUser.email,
+            drive.companyName,
+            drive.jobRole,
+            status,
+            application.remarks || ''
+          );
+        }
+      } catch (emailErr) {
+        // Never let email errors bubble up to the client
+        console.error('Status email notification failed (non-critical):', emailErr.message);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
 
     return ApiResponse.success(res, 'Application status updated successfully', application);
   } catch (error) {

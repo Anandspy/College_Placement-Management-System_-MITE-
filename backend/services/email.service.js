@@ -223,8 +223,111 @@ const sendAdminOTPEmail = async (fullName, email, otp) => {
   }
 };
 
+/**
+ * Send application status update email to a student
+ * @param {string} fullName       - Student's full name
+ * @param {string} email          - Student's email
+ * @param {string} companyName    - Company the student applied to
+ * @param {string} jobRole        - Job role title
+ * @param {string} newStatus      - New application status value (e.g. 'shortlisted')
+ * @param {string} [remarks]      - Optional admin remarks
+ */
+const sendStatusUpdateEmail = async (fullName, email, companyName, jobRole, newStatus, remarks) => {
+  // Map raw status to human-readable label + UI colour for the email badge
+  const statusMap = {
+    'shortlisted':          { label: 'Shortlisted 🎉',           color: '#059669', bg: '#D1FAE5' },
+    'not-shortlisted':      { label: 'Not Shortlisted',          color: '#DC2626', bg: '#FEE2E2' },
+    'test-cleared':         { label: 'Online Test Cleared ✅',   color: '#0284C7', bg: '#E0F2FE' },
+    'test-failed':          { label: 'Online Test Not Cleared',  color: '#DC2626', bg: '#FEE2E2' },
+    'interview-scheduled':  { label: 'Interview Scheduled 📅',  color: '#7C3AED', bg: '#EDE9FE' },
+    'selected':             { label: 'Selected — Offer Extended 🏆', color: '#D97706', bg: '#FEF3C7' },
+    'rejected':             { label: 'Application Closed',       color: '#6B7280', bg: '#F3F4F6' },
+  };
+
+  const statusInfo = statusMap[newStatus] || { label: newStatus, color: '#09529B', bg: '#EFF6FF' };
+
+  const remarksBlock = remarks
+    ? `<div style="background:#F8F9FA;border-left:3px solid #F48120;border-radius:6px;padding:14px 18px;margin:20px 0;">
+         <p style="color:#495057;font-size:13px;margin:0 0 4px;font-weight:600;">Remarks from Placement Cell:</p>
+         <p style="color:#495057;font-size:14px;margin:0;line-height:1.6;">${remarks}</p>
+       </div>`
+    : '';
+
+  const mailOptions = {
+    from: `"MITE Placement Cell" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `Application Update: ${companyName} — ${statusInfo.label}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin:0;padding:0;background-color:#F8F9FA;font-family:'Inter',Arial,sans-serif;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#09529B;padding:24px 32px;text-align:center;">
+              <h1 style="color:#ffffff;font-size:32px;margin:0;font-weight:800;letter-spacing:1px;font-family:'Montserrat',Arial,sans-serif;">MITE</h1>
+              <p style="color:#ffffff;font-size:14px;margin:8px 0 0;font-weight:600;letter-spacing:0.5px;opacity:0.9;">Placement Portal</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="background-color:#ffffff;padding:40px 32px;">
+              <p style="color:#1A1D21;font-size:16px;font-weight:600;margin:0 0 8px;">Hi ${fullName},</p>
+              <p style="color:#495057;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                There has been an update on your application for 
+                <strong>${jobRole}</strong> at <strong>${companyName}</strong>.
+              </p>
+              <!-- Status Badge -->
+              <div style="text-align:center;margin:0 0 24px;">
+                <div style="display:inline-block;background-color:${statusInfo.bg};border-radius:12px;padding:14px 32px;border:1px solid ${statusInfo.color}30;">
+                  <span style="font-size:20px;font-weight:700;color:${statusInfo.color};letter-spacing:0.5px;">
+                    ${statusInfo.label}
+                  </span>
+                </div>
+              </div>
+              ${remarksBlock}
+              <p style="color:#495057;font-size:14px;line-height:1.6;margin:0 0 8px;">
+                Log in to the Placement Portal to view your full application status and next steps.
+              </p>
+              <div style="text-align:center;margin:24px 0 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard/student/applications"
+                   style="display:inline-block;background-color:#F48120;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:14px 40px;border-radius:8px;">
+                  View My Applications
+                </a>
+              </div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#063872;padding:20px 32px;text-align:center;">
+              <p style="color:#9DB5D1;font-size:11px;line-height:1.5;margin:0;">
+                This is an automated message from MITE Placement Cell.<br>
+                Do not reply to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`📧 Status update email sent to ${email} (${newStatus}) | messageId: ${info.messageId}`);
+  } catch (error) {
+    // Log but do NOT throw — email failure should never fail the status update API call
+    console.error('Failed to send status update email:', error.message);
+  }
+};
+
 module.exports = {
   sendOTPEmail,
   sendResetEmail,
   sendAdminOTPEmail,
+  sendStatusUpdateEmail,
 };
