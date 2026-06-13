@@ -60,12 +60,24 @@ exports.getAllStudents = async (req, res, next) => {
     }
     
     // Execute query with pagination
-    const students = await User.find(query)
+    const users = await User.find(query)
       .select('-password -refreshToken -resetPasswordToken -resetPasswordExpiry')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
       
+    // Fetch profiles to get CGPA
+    const userIds = users.map(user => user._id);
+    const profiles = await StudentProfile.find({ userId: { $in: userIds } }).select('userId cgpa');
+    
+    const students = users.map(user => {
+      const profile = profiles.find(p => p.userId.toString() === user._id.toString());
+      return {
+        ...user.toObject(),
+        cgpa: profile ? profile.cgpa : null
+      };
+    });
+
     // Get total count for pagination
     const total = await User.countDocuments(query);
     

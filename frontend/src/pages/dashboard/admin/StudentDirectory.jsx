@@ -221,7 +221,7 @@ const StudentDirectory = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md">
-                        {student.profileComplete != null ? `${student.profileComplete}%` : 'N/A'}
+                        {student.cgpa != null ? student.cgpa : 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
