@@ -58,13 +58,11 @@ const sanitizeUpdate = (body) => {
  */
 const getMyProfile = async (req, res, next) => {
   try {
-    let profile = await StudentProfile.findOne({ userId: req.user._id }).lean();
-
-    if (!profile) {
-      // Auto-create an empty profile linked to this user
-      const newProfile = await StudentProfile.create({ userId: req.user._id });
-      profile = newProfile.toObject();
-    }
+    let profile = await StudentProfile.findOneAndUpdate(
+      { userId: req.user._id },
+      { $setOnInsert: { userId: req.user._id } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean();
 
     return ApiResponse.success(res, 'Profile fetched successfully', {
       profile,

@@ -463,26 +463,76 @@ const StudentProfilePage = () => {
           >
             <SectionHeader icon={Globe} title="Social" />
             <div className="space-y-6">
-              <InfoItem
-                label="LinkedIn Profile"
-                value={profile?.linkedIn}
-                icon={Globe}
-                isEditing={isEditing}
-                register={register}
-                name="linkedIn"
-                error={errors.linkedIn}
-                placeholder="https://linkedin.com/in/yourprofile"
-              />
-              <InfoItem
-                label="GitHub Profile"
-                value={profile?.github}
-                icon={Globe}
-                isEditing={isEditing}
-                register={register}
-                name="github"
-                error={errors.github}
-                placeholder="https://github.com/yourusername"
-              />
+              {isEditing ? (
+                <>
+                  <InfoItem
+                    label="LinkedIn Profile"
+                    value={profile?.linkedIn}
+                    icon={Globe}
+                    isEditing={isEditing}
+                    register={register}
+                    name="linkedIn"
+                    error={errors.linkedIn}
+                    placeholder="https://linkedin.com/in/yourprofile"
+                  />
+                  <InfoItem
+                    label="GitHub Profile"
+                    value={profile?.github}
+                    icon={Globe}
+                    isEditing={isEditing}
+                    register={register}
+                    name="github"
+                    error={errors.github}
+                    placeholder="https://github.com/yourusername"
+                  />
+                </>
+              ) : (
+                <div className="flex flex-wrap gap-4">
+                  {profile?.linkedIn ? (
+                    <a
+                      href={profile.linkedIn.startsWith('http') ? profile.linkedIn : `https://${profile.linkedIn}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-sm group"
+                    >
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/linkedin/linkedin-original.svg" alt="LinkedIn" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-bold text-neutral-700">LinkedIn</span>
+                    </a>
+                  ) : (
+                    <div className="space-y-1.5 w-full">
+                      <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        <Globe className="h-3.5 w-3.5" />
+                        LinkedIn Profile
+                      </div>
+                      <p className="text-[15px] font-semibold text-neutral-800 break-words">
+                        <span className="text-neutral-400 font-normal italic">Not provided</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {profile?.github ? (
+                    <a
+                      href={profile.github.startsWith('http') ? profile.github : `https://${profile.github}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-sm group"
+                    >
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg" alt="GitHub" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm font-bold text-neutral-700">GitHub</span>
+                    </a>
+                  ) : (
+                    <div className="space-y-1.5 w-full">
+                      <div className="flex items-center gap-2 text-xs font-medium text-neutral-500 uppercase tracking-wider">
+                        <Globe className="h-3.5 w-3.5" />
+                        GitHub Profile
+                      </div>
+                      <p className="text-[15px] font-semibold text-neutral-800 break-words">
+                        <span className="text-neutral-400 font-normal italic">Not provided</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
